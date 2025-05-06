@@ -15,7 +15,7 @@ pub struct Interpreter {
     environment: Environment,
 }
 
-#[derive(Error, Debug)]
+#[derive(Error, Debug, PartialEq, Eq)]
 pub enum EvalError {
     #[error("Unhandled exception: {0}")]
     UnhandledException(Exception),

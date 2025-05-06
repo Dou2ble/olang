@@ -29,7 +29,7 @@ pub enum Value {
     Null,
 }
 
-#[derive(Debug, Display, PartialEq)]
+#[derive(Debug, Display, PartialEq, Eq)]
 pub enum ExceptionKind {
     WrongNumberOfArguments,
     NestedReturns,
@@ -41,7 +41,7 @@ pub enum ExceptionKind {
     Custom(String),
 }
 
-#[derive(Debug)]
+#[derive(Debug, PartialEq, Eq)]
 pub struct Exception {
     pub kind: ExceptionKind,
     pub region: Region,

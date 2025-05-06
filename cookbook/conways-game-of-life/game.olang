@@ -156,9 +156,7 @@ var formatGrid = fun() {
                 output += "  "
             }
         }
-        # TODO: add \n
-        output += "
-"
+        output += "\n"
     }
 
     output

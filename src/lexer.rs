@@ -21,7 +21,20 @@ static KEYWORDS: phf::Map<&'static str, TokenValue> = phf_map! {
     "throw" => TokenValue::KeywordThrow,
 };
 
-#[derive(EnumDiscriminants, Display, Debug, PartialEq, Clone)]
+static ESCAPE_SEQUENCES: phf::Map<char, char> = phf_map! {
+    'n' => '\n', // newline
+    'r' => '\r', // carriage return
+    't' => '\t', // tab
+    'b' => '\x08', // backspace
+    'f' => '\x0c', // form feed
+    'v' => '\x0b', // vertical tab
+    '\\' => '\\', // backslash
+    '\'' => '\'', // single quote
+    '\"' => '\"', // double quote
+    '0' => '\0', // null character
+};
+
+#[derive(EnumDiscriminants, Display, Debug, PartialEq, Clone, Eq)]
 #[strum_discriminants(derive(Display))]
 pub enum TokenValue {
     KeywordFun,           // fun
@@ -72,7 +85,7 @@ pub enum TokenValue {
     Decrement,            // --
 }
 
-#[derive(Debug, Clone)]
+#[derive(Debug, Clone, PartialEq, Eq)]
 pub struct Token {
     pub value: TokenValue,
     pub region: Region,
@@ -84,10 +97,14 @@ impl Token {
     }
 }
 
-#[derive(Debug, Error)]
+#[derive(Debug, Error, PartialEq, Eq)]
 pub enum LexerError {
-    #[error("{location} unexpected character found during parsing: {char}")]
+    #[error("{location} unexpected character found during lexical analysis: {char}")]
     UnexpectedCharacter { location: Location, char: char },
+    #[error(
+        "{location} unexpected escape sequence found in string during lexical analysis: \\{char}"
+    )]
+    UnexpectedEscapeSequence { location: Location, char: char },
     #[error("{location} expected digit in int token, found: {char}")]
     NotDigit { location: Location, char: char },
 }
@@ -275,7 +292,21 @@ impl Lexer {
                 let mut value = "".to_string();
                 self.advance();
                 while self.c < self.source.len() && self.current() != '"' {
-                    value.push(self.current());
+                    match self.current() {
+                        '\\' => {
+                            self.advance();
+                            let char = ESCAPE_SEQUENCES.get(&self.current()).ok_or(
+                                LexerError::UnexpectedEscapeSequence {
+                                    location: self.current_location(),
+                                    char: self.current(),
+                                },
+                            )?;
+                            value.push(char.clone());
+                        }
+                        _ => {
+                            value.push(self.current());
+                        }
+                    }
                     self.advance();
                 }
                 self.advance();

@@ -1,6 +1,6 @@
 use std::fmt;
 
-#[derive(Debug, Clone)]
+#[derive(Debug, Clone, PartialEq, Eq)]
 pub struct Location {
     pub row: usize,
     pub col: usize,
@@ -37,7 +37,7 @@ impl fmt::Display for Location {
     }
 }
 
-#[derive(Debug, Clone)]
+#[derive(Debug, Clone, PartialEq, Eq)]
 pub struct Region {
     pub start: Location,
     pub end: Location,

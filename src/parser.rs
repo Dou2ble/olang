@@ -5,7 +5,7 @@ use crate::{
 };
 use thiserror::Error;
 
-#[derive(Error, Debug)]
+#[derive(Error, Debug, PartialEq, Eq)]
 pub enum ParserError {
     #[error("{0} unexpected token found while parsing \"{1}\" expression, expected token of value \"{2}\", found \"{3}\"", .found.region, .while_parsing, .expected, .found.value)]
     ExpectedToken {

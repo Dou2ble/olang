@@ -47,6 +47,58 @@ fn strings() {
 }
 
 #[test]
+fn strings_escape_sequences() {
+    assert_eq!(
+        eval("\"arst\\narstarst\"").unwrap(),
+        Value::String("arst\narstarst".to_string()) // newline
+    );
+    assert_eq!(
+        eval("\"hello\\rworld\"").unwrap(),
+        Value::String("hello\rworld".to_string()) // carriage return
+    );
+    assert_eq!(
+        eval("\"tab\\tcharacter\"").unwrap(),
+        Value::String("tab\tcharacter".to_string()) // tab
+    );
+    assert_eq!(
+        eval("\"backspace\\btest\"").unwrap(),
+        Value::String("backspace\x08test".to_string()) // backspace
+    );
+    assert_eq!(
+        eval("\"formfeed\\fpage\"").unwrap(),
+        Value::String("formfeed\x0cpage".to_string()) // form feed
+    );
+    assert_eq!(
+        eval("\"vertical\\vtab\"").unwrap(),
+        Value::String("vertical\x0btab".to_string()) // vertical tab
+    );
+    assert_eq!(
+        eval("\"backslash\\\\\"").unwrap(),
+        Value::String("backslash\\".to_string()) // backslash
+    );
+    assert_eq!(
+        eval("\"single quote\\'\"").unwrap(),
+        Value::String("single quote'".to_string()) // single quote
+    );
+    assert_eq!(
+        eval("\"double quote\\\"\"").unwrap(),
+        Value::String("double quote\"".to_string()) // double quote
+    );
+    assert_eq!(
+        eval("\"null character\\0\"").unwrap(),
+        Value::String("null character\x00".to_string()) // null character
+    );
+
+    assert_eq!(
+        eval("\"nonexsistant\\e escape sequence\"").unwrap_err(),
+        EvalError::Lexer(lexer::LexerError::UnexpectedEscapeSequence {
+            location: location::Location { row: 1, col: 15 },
+            char: 'e'
+        })
+    );
+}
+
+#[test]
 fn comments() {
     assert_eq!(
         eval(include_str!("block-comments.olang")).unwrap(),
