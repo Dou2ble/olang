@@ -149,7 +149,7 @@ impl Parser {
         &self.tokens[self.t]
     }
 
-    fn current_val(&self) -> &TokenValue {
+    fn current_value(&self) -> &TokenValue {
         &self.tokens[self.t].value
     }
 
@@ -157,7 +157,7 @@ impl Parser {
         &self.tokens[self.t - 1]
     }
 
-    fn next_val(&self) -> &TokenValue {
+    fn next_value(&self) -> &TokenValue {
         &self.tokens[self.t + 1].value
     }
 
@@ -167,7 +167,7 @@ impl Parser {
         while_parsing: ExpressionValueDiscriminants,
         value: TokenValueDiscriminants,
     ) -> Result<(), ParserError> {
-        if value != self.current_val().into() {
+        if value != self.current_value().into() {
             Err(ParserError::ExpectedToken {
                 expected: value,
                 found: self.current().clone(),
@@ -200,7 +200,7 @@ impl Parser {
 
         let mut expressions: Vec<Expression> = vec![];
         loop {
-            match self.current_val() {
+            match self.current_value() {
                 TokenValue::CloseBrace => break,
                 _ => expressions.push(self.parse_expression()?),
             };
@@ -219,7 +219,7 @@ impl Parser {
 
         let mut expressions: Vec<Expression> = vec![];
         loop {
-            match self.current_val() {
+            match self.current_value() {
                 TokenValue::CloseBracket => break,
                 _ => expressions.push(self.parse_expression()?),
             };
@@ -230,7 +230,7 @@ impl Parser {
     }
 
     fn parse_identifier(&mut self) -> Result<ExpressionValue, ParserError> {
-        let value = match self.current_val() {
+        let value = match self.current_value() {
             TokenValue::Identifier(v) => Ok(v.clone()),
             _ => Err(self.expect_token_err(
                 ExpressionValueDiscriminants::Identifier,
@@ -242,7 +242,7 @@ impl Parser {
     }
 
     fn parse_int(&mut self) -> Result<ExpressionValue, ParserError> {
-        let value = match self.current_val() {
+        let value = match self.current_value() {
             TokenValue::Int(v) => Ok(*v),
             _ => Err(self.expect_token_err(
                 ExpressionValueDiscriminants::Int,
@@ -254,7 +254,7 @@ impl Parser {
     }
 
     fn parse_string(&mut self) -> Result<ExpressionValue, ParserError> {
-        let value = match self.current_val() {
+        let value = match self.current_value() {
             TokenValue::String(v) => Ok(v.clone()),
             _ => Err(self.expect_token_err(
                 ExpressionValueDiscriminants::String,
@@ -275,7 +275,7 @@ impl Parser {
     }
 
     fn parse_bool(&mut self) -> Result<ExpressionValue, ParserError> {
-        let value = match self.current_val() {
+        let value = match self.current_value() {
             TokenValue::KeywordTrue => Ok(true),
             TokenValue::KeywordFalse => Ok(false),
             _ => Err(ParserError::UnexpectedToken {
@@ -294,7 +294,7 @@ impl Parser {
         )?;
         self.advance();
 
-        let identifier = match self.current_val() {
+        let identifier = match self.current_value() {
             TokenValue::Identifier(v) => Ok(v),
             _ => Err(self.expect_token_err(
                 ExpressionValueDiscriminants::VariableDeclaration,
@@ -317,7 +317,7 @@ impl Parser {
     }
 
     fn parse_call(&mut self) -> Result<ExpressionValue, ParserError> {
-        let identifier = match self.current_val() {
+        let identifier = match self.current_value() {
             TokenValue::Identifier(v) => Ok(v.clone()),
             _ => Err(self.expect_token_err(
                 ExpressionValueDiscriminants::Call,
@@ -333,7 +333,7 @@ impl Parser {
         self.advance();
 
         let mut arguments = vec![];
-        while *self.current_val() != TokenValue::CloseParenthesis {
+        while *self.current_value() != TokenValue::CloseParenthesis {
             arguments.push(self.parse_expression()?);
         }
         self.advance(); // skip the clogin parenthesis )
@@ -345,7 +345,7 @@ impl Parser {
     }
 
     fn parse_index(&mut self) -> Result<ExpressionValue, ParserError> {
-        let identifier = match self.current_val() {
+        let identifier = match self.current_value() {
             TokenValue::Identifier(v) => Ok(v.clone()),
             _ => Err(self.expect_token_err(
                 ExpressionValueDiscriminants::Index,
@@ -361,7 +361,7 @@ impl Parser {
         self.advance();
 
         let mut indexes = vec![];
-        while self.current_val() != &TokenValue::CloseBracket {
+        while self.current_value() != &TokenValue::CloseBracket {
             indexes.push(self.parse_expression()?)
         }
 
@@ -388,7 +388,7 @@ impl Parser {
 
         let mut parameters = vec![];
         loop {
-            match self.current_val() {
+            match self.current_value() {
                 TokenValue::CloseParenthesis => {
                     self.advance();
                     break;
@@ -428,7 +428,7 @@ impl Parser {
         }];
 
         // parse any amount of elifs
-        while self.current_val() == &TokenValue::KeywordElif {
+        while self.current_value() == &TokenValue::KeywordElif {
             self.advance();
 
             let test = self.parse_expression()?;
@@ -441,7 +441,7 @@ impl Parser {
         }
 
         let mut else_block = None;
-        match self.current_val() {
+        match self.current_value() {
             TokenValue::KeywordElse => {
                 // parse the else block
                 self.advance();
@@ -462,7 +462,7 @@ impl Parser {
             For,
             Loop,
         }
-        let loop_type = match self.current_val() {
+        let loop_type = match self.current_value() {
             TokenValue::KeywordWhile => LoopType::While,
             TokenValue::KeywordLoop => LoopType::Loop,
             TokenValue::KeywordFor => LoopType::For,
@@ -506,7 +506,7 @@ impl Parser {
     }
 
     fn parse_assign(&mut self) -> Result<ExpressionValue, ParserError> {
-        let identifier = match self.current_val() {
+        let identifier = match self.current_value() {
             TokenValue::Identifier(v) => Ok(v),
             _ => Err(self.expect_token_err(
                 ExpressionValueDiscriminants::Assign,
@@ -516,7 +516,7 @@ impl Parser {
         .clone();
         self.advance();
 
-        let operator = match self.current_val() {
+        let operator = match self.current_value() {
             TokenValue::EqualSign => AssignmentOperator::Set,
             TokenValue::AdditionAssign => AssignmentOperator::Plus,
             TokenValue::SubtractionAssign => AssignmentOperator::Minus,
@@ -540,7 +540,7 @@ impl Parser {
     }
 
     fn parse_update(&mut self) -> Result<ExpressionValue, ParserError> {
-        let identifier = match self.current_val() {
+        let identifier = match self.current_value() {
             TokenValue::Identifier(v) => Ok(v),
             _ => Err(self.expect_token_err(
                 ExpressionValueDiscriminants::Assign,
@@ -550,7 +550,7 @@ impl Parser {
         .clone();
         self.advance();
 
-        let operator = match self.current_val() {
+        let operator = match self.current_value() {
             TokenValue::Increment => UpdateOperator::Increment,
             TokenValue::Decrement => UpdateOperator::Decremet,
             _ => {
@@ -593,7 +593,7 @@ impl Parser {
         )?;
         self.advance();
 
-        let value = match self.current_val() {
+        let value = match self.current_value() {
             TokenValue::String(v) => Ok(v.clone()),
             _ => Err(self.expect_token_err(
                 ExpressionValueDiscriminants::Throw,
@@ -607,10 +607,10 @@ impl Parser {
 
     fn parse_primary(&mut self) -> Result<Expression, ParserError> {
         let start = self.current().region.start.clone();
-        let value = match self.current_val() {
+        let value = match self.current_value() {
             TokenValue::Int(_) => self.parse_int(),
             TokenValue::String(_) => self.parse_string(),
-            TokenValue::Identifier(_) => match self.next_val() {
+            TokenValue::Identifier(_) => match self.next_value() {
                 TokenValue::OpenParenthesis => self.parse_call(),
                 TokenValue::OpenBracket => self.parse_index(),
                 TokenValue::EqualSign
@@ -665,7 +665,7 @@ impl Parser {
         let mut left = self.parse_primary()?;
 
         loop {
-            let operator = match self.current_val() {
+            let operator = match self.current_value() {
                 TokenValue::ExponentSign => BinaryOperationOperator::Exponentiation,
                 _ => {
                     break;
@@ -694,7 +694,7 @@ impl Parser {
         let mut left = self.parse_exponentiative()?;
 
         loop {
-            let operator = match self.current_val() {
+            let operator = match self.current_value() {
                 TokenValue::MultiplicationSign => BinaryOperationOperator::Multiply,
                 TokenValue::DivisionSign => BinaryOperationOperator::Divide,
                 TokenValue::ModuloSign => BinaryOperationOperator::Modulus,
@@ -725,7 +725,7 @@ impl Parser {
         let mut left = self.parse_multiplicative()?;
 
         loop {
-            let operator = match self.current_val() {
+            let operator = match self.current_value() {
                 TokenValue::PlusSign => BinaryOperationOperator::Plus,
                 TokenValue::MinusSign => BinaryOperationOperator::Minus,
                 _ => {
@@ -755,7 +755,7 @@ impl Parser {
         let mut left = self.parse_additive()?;
 
         loop {
-            let operator = match self.current_val() {
+            let operator = match self.current_value() {
                 TokenValue::IsEqual => BinaryOperationOperator::IsEqual,
                 TokenValue::IsNotEqual => BinaryOperationOperator::IsNotEqual,
                 TokenValue::IsGreaterThan => BinaryOperationOperator::IsGreaterThan,
@@ -789,7 +789,7 @@ impl Parser {
         let mut left = self.parse_comparative()?;
 
         loop {
-            let operator = match self.current_val() {
+            let operator = match self.current_value() {
                 TokenValue::And => BinaryOperationOperator::LogicalAnd,
                 TokenValue::Or => BinaryOperationOperator::LogicalOr,
                 _ => {
