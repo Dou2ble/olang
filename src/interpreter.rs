@@ -461,6 +461,10 @@ impl Interpreter {
             } => self.eval_loop(init, test, update, body, &expression.region),
             ExpressionValue::Continue => Err(ControlFlowValue::Continue),
             ExpressionValue::Break => Err(ControlFlowValue::Break),
+            ExpressionValue::Throw(v) => Err(ControlFlowValue::Exception(Exception {
+                kind: ExceptionKind::Custom(v.clone()),
+                region: expression.region.clone(),
+            })),
             ExpressionValue::Function(v) => Ok(Value::Function(Function::Defined(v.clone()))),
             ExpressionValue::Block(v) => self.eval_block(true, v),
             ExpressionValue::Identifier(id) => self.eval_identifier(id, &expression.region),

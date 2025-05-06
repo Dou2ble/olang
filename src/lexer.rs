@@ -17,6 +17,7 @@ static KEYWORDS: phf::Map<&'static str, TokenValue> = phf_map! {
     "loop" => TokenValue::KeywordLoop,
     "continue" => TokenValue::KeywordContinue,
     "break" => TokenValue::KeywordBreak,
+    "throw" => TokenValue::KeywordThrow,
 };
 
 #[derive(EnumDiscriminants, Display, Debug, PartialEq, Clone)]
@@ -35,6 +36,7 @@ pub enum TokenValue {
     KeywordLoop,          // loop
     KeywordContinue,      // continue
     KeywordBreak,         // break
+    KeywordThrow,         // throw
     EqualSign,            // =
     CloseParenthesis,     // )
     OpenParenthesis,      // (

@@ -21,6 +21,23 @@ fn loops() {
 }
 
 #[test]
+fn throw() {
+    match eval("throw \"Custom error message!\"") {
+        Err(EvalError::UnhandledException(exception)) => match exception.kind {
+            ExceptionKind::Custom(v) => {
+                assert_eq!(v, "Custom error message!".to_string())
+            }
+            _ => {
+                panic!("exception is of wrong kind")
+            }
+        },
+        _ => {
+            panic!("throw returned wrong value")
+        }
+    }
+}
+
+#[test]
 fn strings() {
     assert_eq!(eval("\"arst\"").unwrap(), Value::String("arst".to_string()));
     assert_eq!(
