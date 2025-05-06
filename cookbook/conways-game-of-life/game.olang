@@ -1,149 +1,76 @@
 #!/usr/bin/env olang
 
-# Still lifes
-var BLOCK = [
-    [false false false false]
-    [false true  true  false]
-    [false true  true  false]
-    [false false false false]
-]
+var grid = []
+var gridRows = 0
+var gridCols = 0
+var padding = 5
 
-var BEEHIVE = [
-    [false false false false false false]
-    [false false true  true  false false]
-    [false true  false false true  false]
-    [false false true  true  false false]
-    [false false false false false false]
-]
+# https://conwaylife.com/wiki/Plaintext
+var parsePlaintext = fun() {
+    var parsedGrid = []
 
-var LOAF = [
-    [false false false false false false]
-    [false false true  true  false false]
-    [false true  false false true  false]
-    [false false true  false true  false]
-    [false false false true  false false]
-    [false false false false false false]
-]
+    # parse from stdin
+    loop {
+        var input = readLn()
 
-var BOAT = [
-    [false false false false false]
-    [false true  true  false false]
-    [false true  false true  false]
-    [false false true  false false]
-    [false false false false false]
-]
+        # The end of the input
+        if len(input) == 0 {
+            break
+        }
 
-var TUB = [
-    [false false false false false]
-    [false false true  false false]
-    [false true  false true  false]
-    [false false true  false false]
-    [false false false false false]
-]
+        # plaintext comment
+        if input.0 == "!" {
+            continue
+        }
 
-# Oscillators
-var BLINKER = [
-    [false false false false false]
-    [false false true  false false]
-    [false false true  false false]
-    [false false true  false false]
-    [false false false false false]
-]
+        var row = []
+        for var i = 0  i < len(input)  i++ {
+            row += input.i == "O"
+        }
+        parsedGrid += row
+    }
 
-var TOAD = [
-    [false false false false false false]
-    [false false false false false false]
-    [false false true  true  true  false]
-    [false true  true  true  false false]
-    [false false false false false false]
-    [false false false false false false]
-]
+    var parsedGridRows = len(parsedGrid)
+    var parsedGridCols = len(parsedGrid.0)
 
-var BEACON = [
-    [false false false false false false]
-    [false true  true  false false false]
-    [false true  false false false false]
-    [false false false false true  false]
-    [false false false true  true  false]
-    [false false false false false false]
-]
+    for var i = 0  i < padding  i++ {
+        var row = []
+        for var col = 0  col < parsedGridCols + padding*2  col++ {
+            row += false
+        }
+        grid += row
+    }
 
-# Spaceships
-var GLIDER = [
-    [false true  false false false false false false false false]
-    [false false true  false false false false false false false]
-    [true  true  true  false false false false false false false]
-    [false false false false false false false false false false]
-    [false false false false false false false false false false]
-    [false false false false false false false false false false]
-    [false false false false false false false false false false]
-    [false false false false false false false false false false]
-    [false false false false false false false false false false]
-    [false false false false false false false false false false]
-]
+    for var rowIndex = 0 rowIndex < parsedGridRows  rowIndex++ {
+        var row = []
+        for var i = 0  i < padding  i++ {
+            row += false
+        }
+        for var col = 0  col < parsedGridCols  col++ {
+            row += parsedGrid.rowIndex.col
+        }
+        for var i = 0  i < padding  i++ {
+            row += false
+        }
+        grid += row
+    }
 
-var LWSS = [
-    [false false false false false false false false false false false false false false false false false false false false]
-    [false false false false false false false false false false false false false false false false false false false false]
-    [false true  true  true  true  false false false false false false false false false false false false false false false]
-    [true  false false false true  false false false false false false false false false false false false false false false]
-    [false false false false true  false false false false false false false false false false false false false false false]
-    [true  false false true  false false false false false false false false false false false false false false false false]
-]
+    for var i = 0  i < padding  i++ {
+        var row = []
+        for var col = 0  col < parsedGridCols + padding*2  col++ {
+            row += false
+        }
+        grid += row
+    }
 
-var MWSS = [
-    [false false false false false false false false false false false false false false false false false false false false]
-    [false false false false false false false false false false false false false false false false false false false false]
-    [false true  true  true  true  true  false false false false false false false false false false false false false false]
-    [true  false false false false true  false false false false false false false false false false false false false false]
-    [false false false false false true  false false false false false false false false false false false false false false]
-    [true  false false false true  false false false false false false false false false false false false false false false]
-    [false false true  false false false false false false false false false false false false false false false false false]
-]
-
-printLn("Pick a starting grid:
-    Still lifes:
-        1  - Block
-        2  - Beehive
-        3  - Loaf
-        4  - Boat
-        5  - Tub
-    Oscillators:
-        10 - Blinker
-        11 - Toad
-        12 - Beacon
-    Spaceships:
-        20 - Glider
-        21 - Light-weight spaceship
-        22 - Middle-weight spaceship")
-
-var input = readLn()
-var grid = if input == "1" {
-    BLOCK
-} elif input == "2" {
-    BEEHIVE
-} elif input == "3" {
-    LOAF
-} elif input == "4" {
-    BOAT
-} elif input == "5" {
-    TUB
-} elif input == "10" {
-    BLINKER
-} elif input == "11" {
-    TOAD
-} elif input == "12" {
-    BEACON
-} elif input == "20" {
-    GLIDER
-} elif input == "21" {
-    LWSS
-} elif input == "22" {
-    MWSS
+    gridRows = len(grid)
+    gridCols = len(grid.0)
 }
 
-var gridRows = len(grid)
-var gridCols = len(grid.0)
+printLn("Paste in plaintext formatted game of life grid")
+printLn("https://conwaylife.com/wiki/Plaintext")
+parsePlaintext()
+
 
 var formatGrid = fun() {
     var output = ""
@@ -181,10 +108,6 @@ var getNeighboursRow = fun(row col countCenter) {
         if grid.row.(col-1) {
             result++
         }
-    } else {
-        if grid.row.(gridCols-1) {
-            result++
-        }
     }
     if countCenter {
         if grid.row.col {
@@ -193,10 +116,6 @@ var getNeighboursRow = fun(row col countCenter) {
     }
     if col != gridCols-1 {
         if grid.row.(col+1) {
-            result++
-        }
-    } else {
-        if grid.row.0 {
             result++
         }
     }
@@ -209,14 +128,10 @@ var getNeighbours = fun(row col) {
 
     if row != 0 {
         result += getNeighboursRow(row-1 col true)
-    } else {
-        result += getNeighboursRow(gridRows-1 col true)
     }
     result += getNeighboursRow(row col false)
     if row != gridRows-1 {
         result += getNeighboursRow(row+1 col true)
-    } else {
-        result += getNeighboursRow(0 col true)
     }
 
     result
@@ -247,5 +162,4 @@ printLn(formatGrid())
 loop {
     generation()
     printLn(formatGrid())
-    sleep(100)
 }
