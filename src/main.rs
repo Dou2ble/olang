@@ -5,6 +5,7 @@ use std::{io::Read, path::PathBuf};
 use structopt::StructOpt;
 use value::Value;
 
+mod ast;
 mod builtin;
 mod environment;
 mod interpreter;

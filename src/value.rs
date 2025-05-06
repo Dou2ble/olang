@@ -1,6 +1,6 @@
 use std::fmt::{self};
 
-use crate::{location::Region, parser::DefinedFunction};
+use crate::{ast::DefinedFunction, location::Region};
 use strum::Display;
 use thiserror::Error;
 

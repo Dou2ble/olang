@@ -1,11 +1,12 @@
 use crate::{
+    ast::{
+        AssignmentOperator, BinaryOperationOperator, Block, Expression, ExpressionValue, IfClause,
+        UpdateOperator,
+    },
     environment::Environment,
     lexer::LexerError,
     location::Region,
-    parser::{
-        AssignmentOperator, BinaryOperationOperator, Block, Expression, ExpressionValue, IfClause,
-        Parser, ParserError, UpdateOperator,
-    },
+    parser::{Parser, ParserError},
     value::{ControlFlowValue, Exception, ExceptionKind, Function, Value},
 };
 use thiserror::Error;
