@@ -1,6 +1,7 @@
 use crate::{
     environment::Environment,
-    lexer::{LexerError, Region},
+    lexer::LexerError,
+    location::Region,
     parser::{
         AssignmentOperator, BinaryOperationOperator, Block, Expression, ExpressionValue, IfClause,
         Parser, ParserError, UpdateOperator,

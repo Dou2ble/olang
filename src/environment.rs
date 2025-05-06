@@ -1,6 +1,6 @@
 use crate::{
     builtin::*,
-    lexer::Region,
+    location::Region,
     value::{ControlFlowValue, Exception, ExceptionKind, Function, Value},
 };
 use std::collections::HashMap;

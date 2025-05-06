@@ -1,5 +1,5 @@
 use crate::{
-    lexer::Region,
+    location::Region,
     value::{ControlFlowValue, Exception, ExceptionKind, Value},
 };
 use std::{io, thread, time::Duration};

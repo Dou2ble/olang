@@ -9,6 +9,7 @@ mod builtin;
 mod environment;
 mod interpreter;
 mod lexer;
+mod location;
 mod parser;
 mod value;
 

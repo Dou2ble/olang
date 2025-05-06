@@ -1,4 +1,7 @@
-use crate::lexer::{Lexer, LexerError, Region, Token, TokenValue, TokenValueDiscriminants};
+use crate::{
+    lexer::{Lexer, LexerError, Token, TokenValue, TokenValueDiscriminants},
+    location::Region,
+};
 use strum::{Display, EnumDiscriminants};
 use thiserror::Error;
 
