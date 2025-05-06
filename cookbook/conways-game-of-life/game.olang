@@ -167,12 +167,6 @@ var formatGrid = fun() {
                     " "
                 }
             }
-
-            # if grid.row.col {
-            #     output += "█"
-            # } else {
-            #     output += "  "
-            # }
         }
         output += "\n"
     }
