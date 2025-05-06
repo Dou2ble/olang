@@ -148,13 +148,31 @@ var gridCols = len(grid.0)
 var formatGrid = fun() {
     var output = ""
 
-    for var row = 0  row < gridRows  row++ {
+    for var row = 0  row < gridRows  row+=2 {
         for var col = 0  col < gridCols  col++ {
-            if grid.row.col {
-                output += "██"
+            output += if row != gridRows-1 {
+                if grid.row.col && grid.(row+1).col {
+                    "█"
+                } elif grid.row.col && grid.(row+1).col == false {
+                    "▀"
+                } elif grid.row.col == false && grid.(row+1).col {
+                    "▄"
+                } else {
+                    " "
+                }
             } else {
-                output += "  "
+                if grid.row.col {
+                    "▀"
+                } else {
+                    " "
+                }
             }
+
+            # if grid.row.col {
+            #     output += "█"
+            # } else {
+            #     output += "  "
+            # }
         }
         output += "\n"
     }
