@@ -47,6 +47,18 @@ pub fn read_ln(arguments: Vec<Value>, region: &Region) -> Result<Value, ControlF
     Ok(Value::String(input.trim().to_string()))
 }
 
+pub fn char_codes(arguments: Vec<Value>, region: &Region) -> Result<Value, ControlFlowValue> {
+    expect_num_of_argumets(&arguments, 1, region)?;
+
+    Ok(Value::List(
+        arguments[0]
+            .into_str(region)?
+            .chars()
+            .map(|c| Value::Int(c as u32 as i64))
+            .collect(),
+    ))
+}
+
 pub fn len(arguments: Vec<Value>, region: &Region) -> Result<Value, ControlFlowValue> {
     expect_num_of_argumets(&arguments, 1, region)?;
 
