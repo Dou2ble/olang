@@ -22,52 +22,51 @@ static KEYWORDS: phf::Map<&'static str, TokenValue> = phf_map! {
 #[derive(EnumDiscriminants, Display, Debug, PartialEq, Clone)]
 #[strum_discriminants(derive(Display))]
 pub enum TokenValue {
-    KeywordFun,            // fun
-    KeywordTrue,           // true
-    KeywordFalse,          // false
-    KeywordNull,           // null
-    KeywordVar,            // var
-    KeywordIf,             // if
-    KeywordElif,           // elif
-    KeywordElse,           // else
-    KeywordWhile,          // while
-    KeywordFor,            // for
-    KeywordLoop,           // loop
-    KeywordContinue,       // continue
-    KeywordBreak,          // break
-    DoubleExclamationMark, // !!
-    EqualSign,             // =
-    CloseParenthesis,      // )
-    OpenParenthesis,       // (
-    OpenBracket,           // [
-    CloseBracket,          // ]
-    OpenBrace,             // {
-    CloseBrace,            // }
-    PlusSign,              // +
-    MinusSign,             // -
-    DivisionSign,          // /
-    MultiplicationSign,    // *
-    ExponentSign,          // **
-    ModuloSign,            // %
-    EndOfFile,             // EOF
-    Identifier(String),    // print
-    String(String),        // "Hello World"
-    Int(i64),              // 100
-    IsLessThan,            // <
-    IsLessThanOrEqual,     // <=
-    IsGreaterThan,         // >
-    IsGreaterThanOrEqual,  // >=
-    IsEqual,               // ==
-    IsNotEqual,            // !=
-    And,                   // &&
-    Or,                    // ||
-    AdditionAssign,        // +=
-    SubtractionAssign,     // -=
-    MultiplicationAssign,  // *=
-    DivisionAssign,        // /=
-    ModuloAssign,          // %=
-    Increment,             // ++
-    Decrement,             // --
+    KeywordFun,           // fun
+    KeywordTrue,          // true
+    KeywordFalse,         // false
+    KeywordNull,          // null
+    KeywordVar,           // var
+    KeywordIf,            // if
+    KeywordElif,          // elif
+    KeywordElse,          // else
+    KeywordWhile,         // while
+    KeywordFor,           // for
+    KeywordLoop,          // loop
+    KeywordContinue,      // continue
+    KeywordBreak,         // break
+    EqualSign,            // =
+    CloseParenthesis,     // )
+    OpenParenthesis,      // (
+    OpenBracket,          // [
+    CloseBracket,         // ]
+    OpenBrace,            // {
+    CloseBrace,           // }
+    PlusSign,             // +
+    MinusSign,            // -
+    DivisionSign,         // /
+    MultiplicationSign,   // *
+    ExponentSign,         // **
+    ModuloSign,           // %
+    EndOfFile,            // EOF
+    Identifier(String),   // print
+    String(String),       // "Hello World"
+    Int(i64),             // 100
+    IsLessThan,           // <
+    IsLessThanOrEqual,    // <=
+    IsGreaterThan,        // >
+    IsGreaterThanOrEqual, // >=
+    IsEqual,              // ==
+    IsNotEqual,           // !=
+    And,                  // &&
+    Or,                   // ||
+    AdditionAssign,       // +=
+    SubtractionAssign,    // -=
+    MultiplicationAssign, // *=
+    DivisionAssign,       // /=
+    ModuloAssign,         // %=
+    Increment,            // ++
+    Decrement,            // --
 }
 
 #[derive(Debug, Clone)]
@@ -84,8 +83,8 @@ impl Token {
 
 #[derive(Debug, Clone)]
 pub struct Location {
-    row: usize,
-    col: usize,
+    pub row: usize,
+    pub col: usize,
 }
 
 impl Location {
@@ -254,10 +253,6 @@ impl Lexer {
                     _ => None,
                 },
                 '!' => match self.next_or_space() {
-                    '!' => {
-                        self.advance();
-                        Some(TokenValue::DoubleExclamationMark)
-                    }
                     '=' => {
                         self.advance();
                         Some(TokenValue::IsNotEqual)

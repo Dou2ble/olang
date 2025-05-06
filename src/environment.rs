@@ -1,5 +1,8 @@
-use crate::builtin::*;
-use crate::value::{ControlFlowValue, Exception, Function, Value};
+use crate::{
+    builtin::*,
+    lexer::Region,
+    value::{ControlFlowValue, Exception, ExceptionKind, Function, Value},
+};
 use std::collections::HashMap;
 
 #[derive(Debug)]
@@ -38,12 +41,19 @@ impl Environment {
         None
     }
 
-    pub fn get_or_undeclared(&self, id: &str) -> Result<Value, ControlFlowValue> {
-        self.get(id)
-            .ok_or(ControlFlowValue::Exception(Exception::UndeclaredIdentifier))
+    pub fn get_or_undeclared(&self, id: &str, region: &Region) -> Result<Value, ControlFlowValue> {
+        self.get(id).ok_or(ControlFlowValue::Exception(Exception {
+            kind: ExceptionKind::UndeclaredIdentifier,
+            region: region.clone(),
+        }))
     }
 
-    pub fn assign(&mut self, id: &str, value: Value) -> Result<(), ControlFlowValue> {
+    pub fn assign(
+        &mut self,
+        id: &str,
+        value: Value,
+        region: &Region,
+    ) -> Result<(), ControlFlowValue> {
         let mut success = false;
 
         for scope in self.scopes.iter_mut().rev() {
@@ -57,7 +67,10 @@ impl Environment {
         if success {
             Ok(())
         } else {
-            Err(ControlFlowValue::Exception(Exception::UndeclaredIdentifier))
+            Err(ControlFlowValue::Exception(Exception {
+                kind: ExceptionKind::UndeclaredIdentifier,
+                region: region.clone(),
+            }))
         }
     }
 
@@ -69,7 +82,7 @@ impl Environment {
     fn declare_builtin(
         &mut self,
         id: String,
-        function: fn(Vec<Value>) -> Result<Value, ControlFlowValue>,
+        function: fn(Vec<Value>, region: &Region) -> Result<Value, ControlFlowValue>,
     ) -> &mut Self {
         self.declare(id, Value::Function(Function::Builtin(function)));
         self

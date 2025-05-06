@@ -1,4 +1,4 @@
-use value::Exception;
+use value::ExceptionKind;
 
 use super::*;
 
@@ -69,15 +69,15 @@ fn exponents() {
     // NOTE: is it actually fine that these simple exponents are creating errors? python3 handles them fine
     assert_eq!(
         eval("2**(0-2)").unwrap_err().unwrap_exception(),
-        &Exception::ExponentiationOverflowed
+        &ExceptionKind::ExponentiationOverflowed
     );
     assert_eq!(
         eval("3**(0-1)").unwrap_err().unwrap_exception(),
-        &Exception::ExponentiationOverflowed
+        &ExceptionKind::ExponentiationOverflowed
     );
     assert_eq!(
         eval("5**(1-2)").unwrap_err().unwrap_exception(),
-        &Exception::ExponentiationOverflowed
+        &ExceptionKind::ExponentiationOverflowed
     );
     // assert_eq!(eval("2**-2").unwrap(), Value::Int(0));
     // assert_eq!(eval("3**-1").unwrap(), Value::Int(0));
@@ -88,7 +88,7 @@ fn exponents() {
     assert_eq!(eval("1**0").unwrap(), Value::Int(1));
     assert_eq!(
         eval("(0-2)**3").unwrap_err().unwrap_exception(),
-        &Exception::ExponentiationOverflowed
+        &ExceptionKind::ExponentiationOverflowed
     );
     // assert_eq!(eval("(0-2)**2").unwrap(), Value::Int(4));
     // assert_eq!(eval("(-2)**3").unwrap(), Value::Int(-8));

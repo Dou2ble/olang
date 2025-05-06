@@ -1,13 +1,13 @@
 use std::fmt::{self};
 
-use crate::parser::DefinedFunction;
+use crate::{lexer::Region, parser::DefinedFunction};
 use strum::Display;
 use thiserror::Error;
 
 #[derive(Debug, Clone)]
 pub enum Function {
     Defined(DefinedFunction),
-    Builtin(fn(Vec<Value>) -> Result<Value, ControlFlowValue>),
+    Builtin(fn(Vec<Value>, region: &Region) -> Result<Value, ControlFlowValue>),
 }
 
 // FIXME: this implementation is pure bullshit
@@ -30,7 +30,7 @@ pub enum Value {
 }
 
 #[derive(Debug, Display, PartialEq)]
-pub enum Exception {
+pub enum ExceptionKind {
     WrongNumberOfArguments,
     NestedReturns,
     UndeclaredIdentifier,
@@ -39,6 +39,22 @@ pub enum Exception {
     ExponentiationOverflowed,
     IndexOutOfRange,
     Custom(String),
+}
+
+#[derive(Debug)]
+pub struct Exception {
+    pub kind: ExceptionKind,
+    pub region: Region,
+}
+
+impl fmt::Display for Exception {
+    fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
+        write!(
+            f,
+            "Exception at {}->{}: {}",
+            self.region.start, self.region.end, self.kind
+        )
+    }
 }
 
 #[derive(Error, Debug, Display)]
@@ -71,31 +87,43 @@ impl fmt::Display for Value {
 }
 
 impl Value {
-    pub fn into_int(&self) -> Result<&i64, ControlFlowValue> {
+    pub fn into_int(&self, region: &Region) -> Result<&i64, ControlFlowValue> {
         match self {
             Value::Int(v) => Ok(v),
-            _ => Err(ControlFlowValue::Exception(Exception::ValueIsWrongType)),
+            _ => Err(ControlFlowValue::Exception(Exception {
+                kind: ExceptionKind::ValueIsWrongType,
+                region: region.clone(),
+            })),
         }
     }
 
-    pub fn into_bool(&self) -> Result<&bool, ControlFlowValue> {
+    pub fn into_bool(&self, region: &Region) -> Result<&bool, ControlFlowValue> {
         match self {
             Value::Bool(v) => Ok(v),
-            _ => Err(ControlFlowValue::Exception(Exception::ValueIsWrongType)),
+            _ => Err(ControlFlowValue::Exception(Exception {
+                kind: ExceptionKind::ValueIsWrongType,
+                region: region.clone(),
+            })),
         }
     }
 
-    pub fn into_str(&self) -> Result<&str, ControlFlowValue> {
+    pub fn into_str(&self, region: &Region) -> Result<&str, ControlFlowValue> {
         match self {
             Value::String(v) => Ok(v),
-            _ => Err(ControlFlowValue::Exception(Exception::ValueIsWrongType)),
+            _ => Err(ControlFlowValue::Exception(Exception {
+                kind: ExceptionKind::ValueIsWrongType,
+                region: region.clone(),
+            })),
         }
     }
 
-    pub fn into_list(&self) -> Result<&Vec<Value>, ControlFlowValue> {
+    pub fn into_list(&self, region: &Region) -> Result<&Vec<Value>, ControlFlowValue> {
         match self {
             Value::List(v) => Ok(v),
-            _ => Err(ControlFlowValue::Exception(Exception::ValueIsWrongType)),
+            _ => Err(ControlFlowValue::Exception(Exception {
+                kind: ExceptionKind::ValueIsWrongType,
+                region: region.clone(),
+            })),
         }
     }
 }

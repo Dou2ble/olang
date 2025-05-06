@@ -99,8 +99,8 @@ pub enum ExpressionValue {
         arguments: Vec<Expression>,
     },
     Index {
-        expression: Box<Expression>,
-        index: Box<Expression>,
+        identifier: String,
+        indexes: Vec<Expression>,
     },
     If {
         clauses: Vec<IfClause>,
@@ -118,7 +118,7 @@ pub enum ExpressionValue {
 
 #[derive(Clone, Debug)]
 pub struct Expression {
-    region: Region,
+    pub region: Region,
     pub value: ExpressionValue,
 }
 
@@ -343,6 +343,35 @@ impl Parser {
         })
     }
 
+    fn parse_index(&mut self) -> Result<ExpressionValue, ParserError> {
+        let identifier = match self.current_val() {
+            TokenValue::Identifier(v) => Ok(v.clone()),
+            _ => Err(self.expect_token_err(
+                ExpressionValueDiscriminants::Index,
+                TokenValueDiscriminants::Identifier,
+            )),
+        }?;
+        self.advance();
+
+        self.expect_token_discriminant(
+            ExpressionValueDiscriminants::Index,
+            TokenValueDiscriminants::OpenBracket,
+        )?;
+        self.advance();
+
+        let mut indexes = vec![];
+        while self.current_val() != &TokenValue::CloseBracket {
+            indexes.push(self.parse_expression()?)
+        }
+
+        self.advance(); // skip the closing bracket ]
+
+        Ok(ExpressionValue::Index {
+            identifier,
+            indexes,
+        })
+    }
+
     fn parse_function(&mut self) -> Result<ExpressionValue, ParserError> {
         self.expect_token_discriminant(
             ExpressionValueDiscriminants::Function,
@@ -563,6 +592,7 @@ impl Parser {
             TokenValue::String(_) => self.parse_string(),
             TokenValue::Identifier(_) => match self.next_val() {
                 TokenValue::OpenParenthesis => self.parse_call(),
+                TokenValue::OpenBracket => self.parse_index(),
                 TokenValue::EqualSign
                 | TokenValue::AdditionAssign
                 | TokenValue::SubtractionAssign
@@ -610,30 +640,8 @@ impl Parser {
         })
     }
 
-    fn parse_index(&mut self) -> Result<Expression, ParserError> {
-        let mut left = self.parse_primary()?;
-
-        while self.current_val() == &TokenValue::DoubleExclamationMark {
-            self.advance(); // skip the exclamation mark (!)
-
-            let right = self.parse_primary()?;
-            left = Expression {
-                region: Region {
-                    start: left.region.start.clone(),
-                    end: right.region.end.clone(),
-                },
-                value: ExpressionValue::Index {
-                    expression: Box::new(left),
-                    index: Box::new(right),
-                },
-            }
-        }
-
-        Ok(left)
-    }
-
     fn parse_exponentiative(&mut self) -> Result<Expression, ParserError> {
-        let mut left = self.parse_index()?;
+        let mut left = self.parse_primary()?;
 
         loop {
             let operator = match self.current_val() {
@@ -644,7 +652,7 @@ impl Parser {
             };
             self.advance();
 
-            let right = self.parse_index()?;
+            let right = self.parse_primary()?;
             left = Expression {
                 region: Region {
                     start: left.region.start.clone(),

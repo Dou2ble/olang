@@ -1,11 +1,11 @@
 use crate::{
     environment::Environment,
-    lexer::LexerError,
+    lexer::{LexerError, Region},
     parser::{
         AssignmentOperator, BinaryOperationOperator, Block, Expression, ExpressionValue, IfClause,
         Parser, ParserError, UpdateOperator,
     },
-    value::{ControlFlowValue, Exception, Function, Value},
+    value::{ControlFlowValue, Exception, ExceptionKind, Function, Value},
 };
 use thiserror::Error;
 
@@ -28,9 +28,9 @@ pub enum EvalError {
 }
 
 impl EvalError {
-    pub fn unwrap_exception(&self) -> &Exception {
+    pub fn unwrap_exception(&self) -> &ExceptionKind {
         match self {
-            Self::UnhandledException(v) => v,
+            Self::UnhandledException(v) => &v.kind,
             _ => {
                 panic!("called `EvalError::unwrap_exception()` on something else than a `UnhandledException` error")
             }
@@ -38,38 +38,44 @@ impl EvalError {
     }
 }
 
-fn plus(left: Value, right: Value) -> Result<Value, ControlFlowValue> {
+fn plus(left: Value, right: Value, region: &Region) -> Result<Value, ControlFlowValue> {
     Ok(match left {
-        Value::Int(left) => Value::Int(left + right.into_int()?),
-        Value::String(left) => Value::String(left + right.into_str()?),
+        Value::Int(left) => Value::Int(left + right.into_int(region)?),
+        Value::String(left) => Value::String(left + right.into_str(region)?),
         Value::List(mut left) => {
             left.push(right);
             Value::List(left)
         }
-        _ => return Err(ControlFlowValue::Exception(Exception::ValueIsWrongType)),
+        _ => {
+            return Err(ControlFlowValue::Exception(Exception {
+                kind: ExceptionKind::ValueIsWrongType,
+                region: region.clone(),
+            }))
+        }
     })
 }
-fn minus(left: Value, right: Value) -> Result<Value, ControlFlowValue> {
-    Ok(Value::Int(left.into_int()? - right.into_int()?))
+fn minus(left: Value, right: Value, region: &Region) -> Result<Value, ControlFlowValue> {
+    Ok(Value::Int(left.into_int(region)? - right.into_int(region)?))
 }
-fn multiply(left: Value, right: Value) -> Result<Value, ControlFlowValue> {
-    Ok(Value::Int(left.into_int()? * right.into_int()?))
+fn multiply(left: Value, right: Value, region: &Region) -> Result<Value, ControlFlowValue> {
+    Ok(Value::Int(left.into_int(region)? * right.into_int(region)?))
 }
-fn divide(left: Value, right: Value) -> Result<Value, ControlFlowValue> {
-    Ok(Value::Int(left.into_int()? / right.into_int()?))
+fn divide(left: Value, right: Value, region: &Region) -> Result<Value, ControlFlowValue> {
+    Ok(Value::Int(left.into_int(region)? / right.into_int(region)?))
 }
-fn modulo(left: Value, right: Value) -> Result<Value, ControlFlowValue> {
-    Ok(Value::Int(left.into_int()? % right.into_int()?))
+fn modulo(left: Value, right: Value, region: &Region) -> Result<Value, ControlFlowValue> {
+    Ok(Value::Int(left.into_int(region)? % right.into_int(region)?))
 }
-fn exponent(base: Value, exponent: Value) -> Result<Value, ControlFlowValue> {
-    let base_int = *base.into_int()?;
-    let exponent_int = *exponent.into_int()?;
+fn exponent(base: Value, exponent: Value, region: &Region) -> Result<Value, ControlFlowValue> {
+    let base_int = *base.into_int(region)?;
+    let exponent_int = *exponent.into_int(region)?;
     Ok(match (base_int as u64).checked_pow(exponent_int as u32) {
         Some(v) => Value::Int(v as i64),
         None => {
-            return Err(ControlFlowValue::Exception(
-                Exception::ExponentiationOverflowed,
-            ))
+            return Err(ControlFlowValue::Exception(Exception {
+                kind: ExceptionKind::ExponentiationOverflowed,
+                region: region.clone(),
+            }))
         }
     })
 }
@@ -79,55 +85,69 @@ fn is_equal(left: Value, right: Value) -> bool {
 fn is_not_equal(left: Value, right: Value) -> bool {
     left != right
 }
-fn is_less_than(left: Value, right: Value) -> Result<bool, ControlFlowValue> {
-    Ok(left.into_int()? < right.into_int()?)
+fn is_less_than(left: Value, right: Value, region: &Region) -> Result<bool, ControlFlowValue> {
+    Ok(left.into_int(region)? < right.into_int(region)?)
 }
-fn is_less_than_or_equal(left: Value, right: Value) -> Result<bool, ControlFlowValue> {
-    Ok(left.into_int()? <= right.into_int()?)
+fn is_less_than_or_equal(
+    left: Value,
+    right: Value,
+    region: &Region,
+) -> Result<bool, ControlFlowValue> {
+    Ok(left.into_int(region)? <= right.into_int(region)?)
 }
-fn is_greater_than(left: Value, right: Value) -> Result<bool, ControlFlowValue> {
-    Ok(left.into_int()? > right.into_int()?)
+fn is_greater_than(left: Value, right: Value, region: &Region) -> Result<bool, ControlFlowValue> {
+    Ok(left.into_int(region)? > right.into_int(region)?)
 }
-fn is_greater_than_or_equal(left: Value, right: Value) -> Result<bool, ControlFlowValue> {
-    Ok(left.into_int()? >= right.into_int()?)
+fn is_greater_than_or_equal(
+    left: Value,
+    right: Value,
+    region: &Region,
+) -> Result<bool, ControlFlowValue> {
+    Ok(left.into_int(region)? >= right.into_int(region)?)
 }
-fn logical_and(left: Value, right: Value) -> Result<bool, ControlFlowValue> {
-    Ok(*left.into_bool()? && *right.into_bool()?)
+fn logical_and(left: Value, right: Value, region: &Region) -> Result<bool, ControlFlowValue> {
+    Ok(*left.into_bool(region)? && *right.into_bool(region)?)
 }
-fn logical_or(left: Value, right: Value) -> Result<bool, ControlFlowValue> {
-    Ok(*left.into_bool()? || *right.into_bool()?)
+fn logical_or(left: Value, right: Value, region: &Region) -> Result<bool, ControlFlowValue> {
+    Ok(*left.into_bool(region)? || *right.into_bool(region)?)
 }
 
 impl Interpreter {
     fn eval_binary(
         &mut self,
-        left_expression: &Box<Expression>,
+        left_expression: &Expression,
         operator: &BinaryOperationOperator,
-        right_expression: &Box<Expression>,
+        right_expression: &Expression,
     ) -> Result<Value, ControlFlowValue> {
         let left = self.eval_expression(left_expression)?;
         let right = self.eval_expression(right_expression)?;
 
-        // FIXME: utilize the Eq trait instead of this garbage
+        let region = Region {
+            start: left_expression.region.start.clone(),
+            end: right_expression.region.end.clone(),
+        };
+
         Ok(match operator {
-            BinaryOperationOperator::Plus => plus(left, right)?,
-            BinaryOperationOperator::Minus => minus(left, right)?,
-            BinaryOperationOperator::Multiply => multiply(left, right)?,
-            BinaryOperationOperator::Divide => divide(left, right)?,
-            BinaryOperationOperator::Modulus => modulo(left, right)?,
-            BinaryOperationOperator::Exponentiation => exponent(left, right)?,
+            BinaryOperationOperator::Plus => plus(left, right, &region)?,
+            BinaryOperationOperator::Minus => minus(left, right, &region)?,
+            BinaryOperationOperator::Multiply => multiply(left, right, &region)?,
+            BinaryOperationOperator::Divide => divide(left, right, &region)?,
+            BinaryOperationOperator::Modulus => modulo(left, right, &region)?,
+            BinaryOperationOperator::Exponentiation => exponent(left, right, &region)?,
             BinaryOperationOperator::IsEqual => Value::Bool(is_equal(left, right)),
             BinaryOperationOperator::IsNotEqual => Value::Bool(is_not_equal(left, right)),
-            BinaryOperationOperator::IsLessThan => Value::Bool(is_less_than(left, right)?),
+            BinaryOperationOperator::IsLessThan => Value::Bool(is_less_than(left, right, &region)?),
             BinaryOperationOperator::IsLessThanOrEqual => {
-                Value::Bool(is_less_than_or_equal(left, right)?)
+                Value::Bool(is_less_than_or_equal(left, right, &region)?)
             }
-            BinaryOperationOperator::IsGreaterThan => Value::Bool(is_greater_than(left, right)?),
+            BinaryOperationOperator::IsGreaterThan => {
+                Value::Bool(is_greater_than(left, right, &region)?)
+            }
             BinaryOperationOperator::IsGreaterThanOrEqual => {
-                Value::Bool(is_greater_than_or_equal(left, right)?)
+                Value::Bool(is_greater_than_or_equal(left, right, &region)?)
             }
-            BinaryOperationOperator::LogicalAnd => Value::Bool(logical_and(left, right)?),
-            BinaryOperationOperator::LogicalOr => Value::Bool(logical_or(left, right)?),
+            BinaryOperationOperator::LogicalAnd => Value::Bool(logical_and(left, right, &region)?),
+            BinaryOperationOperator::LogicalOr => Value::Bool(logical_or(left, right, &region)?),
         })
     }
 
@@ -152,18 +172,24 @@ impl Interpreter {
         Ok(result)
     }
 
-    fn eval_identifier(&mut self, id: &str) -> Result<Value, ControlFlowValue> {
-        self.environment.get_or_undeclared(id)
+    fn eval_identifier(&mut self, id: &str, region: &Region) -> Result<Value, ControlFlowValue> {
+        self.environment.get_or_undeclared(id, region)
     }
 
     fn eval_call(
         &mut self,
         id: &String,
         arguments: &Vec<Expression>,
+        region: &Region,
     ) -> Result<Value, ControlFlowValue> {
         let function_value = match self.environment.get(id) {
             Some(v) => v,
-            _ => return Err(ControlFlowValue::Exception(Exception::UndeclaredIdentifier)),
+            _ => {
+                return Err(ControlFlowValue::Exception(Exception {
+                    kind: ExceptionKind::UndeclaredIdentifier,
+                    region: region.clone(),
+                }))
+            }
         };
 
         match function_value {
@@ -174,14 +200,15 @@ impl Interpreter {
                 }
 
                 match function {
-                    Function::Builtin(function) => function(evaluated_arguments),
+                    Function::Builtin(function) => function(evaluated_arguments, region),
                     Function::Defined(defined) => {
                         self.environment.push();
 
                         if defined.parameters.len() != arguments.len() {
-                            return Err(ControlFlowValue::Exception(
-                                Exception::WrongNumberOfArguments,
-                            ));
+                            return Err(ControlFlowValue::Exception(Exception {
+                                kind: ExceptionKind::WrongNumberOfArguments,
+                                region: region.clone(),
+                            }));
                         }
 
                         for (i, parameter) in defined.parameters.iter().enumerate() {
@@ -197,9 +224,10 @@ impl Interpreter {
                     }
                 }
             }
-            _ => Err(ControlFlowValue::Exception(
-                Exception::CalledValueIsNotFunction,
-            )),
+            _ => Err(ControlFlowValue::Exception(Exception {
+                kind: ExceptionKind::CalledValueIsNotFunction,
+                region: region.clone(),
+            })),
         }
     }
 
@@ -215,15 +243,21 @@ impl Interpreter {
 
     fn eval_index(
         &mut self,
-        expression: &Expression,
-        index: &Expression,
+        identifier: &str,
+        indexes: &Vec<Expression>,
+        region: &Region,
     ) -> Result<Value, ControlFlowValue> {
-        let mut value = self.eval_expression(expression)?;
-        value = value
-            .into_list()?
-            .get(*self.eval_expression(index)?.into_int()? as usize)
-            .ok_or(ControlFlowValue::Exception(Exception::IndexOutOfRange))?
-            .clone();
+        let mut value = self.environment.get_or_undeclared(identifier, region)?;
+        for index in indexes {
+            value = value
+                .into_list(region)?
+                .get(*self.eval_expression(index)?.into_int(region)? as usize)
+                .ok_or(ControlFlowValue::Exception(Exception {
+                    kind: ExceptionKind::IndexOutOfRange,
+                    region: region.clone(),
+                }))?
+                .clone()
+        }
         Ok(value)
     }
 
@@ -241,13 +275,14 @@ impl Interpreter {
         &mut self,
         clauses: &Vec<IfClause>,
         else_block: &Option<Block>,
+        region: &Region,
     ) -> Result<Value, ControlFlowValue> {
         let mut run_else_block = true;
         let mut result = Value::Null;
 
         for clause in clauses {
             let test_value = self.eval_expression(clause.test.as_ref())?;
-            if *test_value.into_bool()? {
+            if *test_value.into_bool(region)? {
                 result = self.eval_block(true, &clause.body)?;
                 run_else_block = false;
                 break;
@@ -268,34 +303,68 @@ impl Interpreter {
         id: &str,
         operator: &AssignmentOperator,
         expression: &Box<Expression>,
+        region: &Region,
     ) -> Result<Value, ControlFlowValue> {
         let value = self.eval_expression(expression)?;
 
         match operator {
             AssignmentOperator::Set => {
-                self.environment.assign(id, value)?;
+                self.environment.assign(id, value, region)?;
             }
             AssignmentOperator::Plus => {
-                self.environment
-                    .assign(id, plus(self.environment.get_or_undeclared(id)?, value)?)?;
+                self.environment.assign(
+                    id,
+                    plus(
+                        self.environment.get_or_undeclared(id, region)?,
+                        value,
+                        region,
+                    )?,
+                    region,
+                )?;
             }
             AssignmentOperator::Minus => {
-                self.environment
-                    .assign(id, minus(self.environment.get_or_undeclared(id)?, value)?)?;
+                self.environment.assign(
+                    id,
+                    minus(
+                        self.environment.get_or_undeclared(id, region)?,
+                        value,
+                        region,
+                    )?,
+                    region,
+                )?;
             }
             AssignmentOperator::Multiply => {
                 self.environment.assign(
                     id,
-                    multiply(self.environment.get_or_undeclared(id)?, value)?,
+                    multiply(
+                        self.environment.get_or_undeclared(id, region)?,
+                        value,
+                        region,
+                    )?,
+                    region,
                 )?;
             }
             AssignmentOperator::Divide => {
-                self.environment
-                    .assign(id, divide(self.environment.get_or_undeclared(id)?, value)?)?;
+                self.environment.assign(
+                    id,
+                    divide(
+                        self.environment.get_or_undeclared(id, region)?,
+                        value,
+                        region,
+                    )?,
+                    region,
+                )?;
             }
             AssignmentOperator::Modulo => {
-                self.environment
-                    .assign(id, modulo(self.environment.get_or_undeclared(id)?, value)?)?;
+                self.environment.assign(
+                    id,
+                    modulo(
+                        self.environment.get_or_undeclared(id, region)?,
+                        value,
+                        region,
+                    )?,
+                    region,
+                )?;
             }
         }
 
@@ -306,21 +375,26 @@ impl Interpreter {
         &mut self,
         identifier: &str,
         operator: &UpdateOperator,
+        region: &Region,
     ) -> Result<Value, ControlFlowValue> {
         match operator {
             UpdateOperator::Increment => self.environment.assign(
                 identifier,
                 plus(
-                    self.environment.get_or_undeclared(identifier)?,
+                    self.environment.get_or_undeclared(identifier, region)?,
                     Value::Int(1),
+                    region,
                 )?,
+                region,
             ),
             UpdateOperator::Decremet => self.environment.assign(
                 identifier,
                 minus(
-                    self.environment.get_or_undeclared(identifier)?,
+                    self.environment.get_or_undeclared(identifier, region)?,
                     Value::Int(1),
+                    region,
                 )?,
+                region,
             ),
         }?;
 
@@ -333,6 +407,7 @@ impl Interpreter {
         test: &Option<Box<Expression>>,
         update: &Option<Box<Expression>>,
         body: &Block,
+        region: &Region,
     ) -> Result<Value, ControlFlowValue> {
         let mut result = Value::Null;
 
@@ -344,7 +419,7 @@ impl Interpreter {
 
         loop {
             if let Some(test) = test {
-                if !*self.eval_expression(test)?.into_bool()? {
+                if !*self.eval_expression(test)?.into_bool(region)? {
                     break;
                 }
             }
@@ -377,24 +452,27 @@ impl Interpreter {
             ExpressionValue::If {
                 clauses,
                 else_block,
-            } => self.eval_if(clauses, else_block),
+            } => self.eval_if(clauses, else_block, &expression.region),
             ExpressionValue::Loop {
                 init,
                 test,
                 update,
                 body,
-            } => self.eval_loop(init, test, update, body),
+            } => self.eval_loop(init, test, update, body, &expression.region),
             ExpressionValue::Continue => Err(ControlFlowValue::Continue),
             ExpressionValue::Break => Err(ControlFlowValue::Break),
             ExpressionValue::Function(v) => Ok(Value::Function(Function::Defined(v.clone()))),
             ExpressionValue::Block(v) => self.eval_block(true, v),
-            ExpressionValue::Identifier(id) => self.eval_identifier(id),
+            ExpressionValue::Identifier(id) => self.eval_identifier(id, &expression.region),
             ExpressionValue::Call {
                 identifier,
                 arguments,
-            } => self.eval_call(identifier, arguments),
+            } => self.eval_call(identifier, arguments, &expression.region),
             ExpressionValue::List(expressions) => self.eval_list(expressions),
-            ExpressionValue::Index { expression, index } => self.eval_index(expression, index),
+            ExpressionValue::Index {
+                identifier,
+                indexes,
+            } => self.eval_index(identifier, indexes, &expression.region),
             ExpressionValue::VariableDeclaration {
                 identifier,
                 expression,
@@ -403,11 +481,11 @@ impl Interpreter {
                 identifier,
                 operator,
                 expression,
-            } => self.eval_assign(identifier, operator, expression),
+            } => self.eval_assign(identifier, operator, expression, &expression.region),
             ExpressionValue::Update {
                 identifier,
                 operator,
-            } => self.eval_update(identifier, operator),
+            } => self.eval_update(identifier, operator, &expression.region),
             ExpressionValue::Binary {
                 left,
                 operator,
