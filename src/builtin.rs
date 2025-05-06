@@ -51,7 +51,9 @@ pub fn char_codes(arguments: Vec<Value>, region: &Region) -> Result<Value, Contr
     expect_num_of_argumets(&arguments, 1, region)?;
 
     Ok(Value::List(
-        arguments[0]
+        arguments
+            .first()
+            .unwrap()
             .into_str(region)?
             .chars()
             .map(|c| Value::Int(c as u32 as i64))
@@ -62,9 +64,16 @@ pub fn char_codes(arguments: Vec<Value>, region: &Region) -> Result<Value, Contr
 pub fn len(arguments: Vec<Value>, region: &Region) -> Result<Value, ControlFlowValue> {
     expect_num_of_argumets(&arguments, 1, region)?;
 
-    Ok(Value::Int(
-        arguments.first().unwrap().into_list(region)?.len() as i64,
-    ))
+    Ok(Value::Int(match arguments.first().unwrap() {
+        Value::List(list) => list.len(),
+        Value::String(string) => string.len(),
+        _ => {
+            return Err(ControlFlowValue::Exception(Exception {
+                kind: ExceptionKind::ValueIsWrongType,
+                region: region.clone(),
+            }))
+        }
+    } as i64))
 }
 
 pub fn sleep(arguments: Vec<Value>, region: &Region) -> Result<Value, ControlFlowValue> {
