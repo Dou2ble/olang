@@ -253,16 +253,29 @@ impl Interpreter {
         let index_value = self.eval_expression(index)?;
         let index_usize = *index_value.into_int(region)? as usize;
 
-        let value =
-            left_value
-                .into_list(region)?
-                .get(index_usize)
-                .ok_or(ControlFlowValue::Exception(Exception {
-                    kind: ExceptionKind::IndexOutOfRange,
-                    region: region.clone(),
-                }))?;
+        let index_out_of_range = ControlFlowValue::Exception(Exception {
+            kind: ExceptionKind::IndexOutOfRange,
+            region: region.clone(),
+        });
 
-        Ok(value.clone())
+        let value = match left_value {
+            Value::List(list) => list.get(index_usize).ok_or(index_out_of_range)?.clone(),
+            Value::String(string) => Value::String(
+                string
+                    .chars()
+                    .nth(index_usize)
+                    .ok_or(index_out_of_range)?
+                    .to_string(),
+            ),
+            _ => {
+                return Err(ControlFlowValue::Exception(Exception {
+                    kind: ExceptionKind::ValueIsWrongType,
+                    region: region.clone(),
+                }))
+            }
+        };
+
+        return Ok(value);
     }
 
     fn eval_declare_variable(
