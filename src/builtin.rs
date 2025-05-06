@@ -76,6 +76,15 @@ pub fn len(arguments: Vec<Value>, region: &Region) -> Result<Value, ControlFlowV
     } as i64))
 }
 
+pub fn log(arguments: Vec<Value>, region: &Region) -> Result<Value, ControlFlowValue> {
+    expect_num_of_argumets(&arguments, 2, region)?;
+
+    let base = *arguments[0].into_int(region)? as f64;
+    let num = *arguments[1].into_int(region)? as f64;
+
+    Ok(Value::Int((num).log(base) as i64))
+}
+
 pub fn sleep(arguments: Vec<Value>, region: &Region) -> Result<Value, ControlFlowValue> {
     expect_num_of_argumets(&arguments, 1, region)?;
 
