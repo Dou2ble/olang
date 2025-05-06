@@ -1,7 +1,7 @@
 use crate::location::Region;
 use strum::{Display, EnumDiscriminants};
 
-#[derive(Debug, Clone)]
+#[derive(Debug, Clone, PartialEq, Eq)]
 pub enum BinaryOperationOperator {
     Plus,                 // +
     Minus,                // -
@@ -19,7 +19,7 @@ pub enum BinaryOperationOperator {
     LogicalOr,            // ||
 }
 
-#[derive(Debug, Clone)]
+#[derive(Debug, Clone, PartialEq, Eq)]
 pub enum AssignmentOperator {
     Set,      // =
     Plus,     // +=
@@ -29,7 +29,7 @@ pub enum AssignmentOperator {
     Modulo,   // %=
 }
 
-#[derive(Debug, Clone)]
+#[derive(Debug, Clone, PartialEq, Eq)]
 pub enum UpdateOperator {
     Increment, // ++
     Decremet,  // --
@@ -37,19 +37,19 @@ pub enum UpdateOperator {
 
 pub type Block = Vec<Expression>;
 
-#[derive(Debug, Clone)]
+#[derive(Debug, Clone, PartialEq, Eq)]
 pub struct DefinedFunction {
     pub parameters: Vec<String>,
     pub body: Block,
 }
 
-#[derive(Debug, Clone)]
+#[derive(Debug, Clone, PartialEq, Eq)]
 pub struct IfClause {
     pub test: Box<Expression>,
     pub body: Vec<Expression>,
 }
 
-#[derive(Debug, Clone, EnumDiscriminants)]
+#[derive(Debug, Clone, EnumDiscriminants, PartialEq, Eq)]
 #[strum_discriminants(derive(Display))]
 pub enum ExpressionValue {
     Int(i64),
@@ -101,7 +101,7 @@ pub enum ExpressionValue {
     Throw(String),
 }
 
-#[derive(Clone, Debug)]
+#[derive(Clone, Debug, PartialEq, Eq)]
 pub struct Expression {
     pub region: Region,
     pub value: ExpressionValue,

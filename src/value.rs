@@ -4,22 +4,13 @@ use crate::{ast::DefinedFunction, location::Region};
 use strum::Display;
 use thiserror::Error;
 
-#[derive(Debug, Clone)]
+#[derive(Debug, Clone, PartialEq, Eq)]
 pub enum Function {
     Defined(DefinedFunction),
     Builtin(fn(Vec<Value>, region: &Region) -> Result<Value, ControlFlowValue>),
 }
 
-// FIXME: this implementation is pure bullshit
-impl PartialEq for Function {
-    fn eq(&self, _other: &Self) -> bool {
-        false
-    }
-}
-
-impl Eq for Function {}
-
-#[derive(Debug, Clone, Eq, PartialEq)]
+#[derive(Debug, Clone, PartialEq, Eq)]
 pub enum Value {
     Function(Function),
     String(String),

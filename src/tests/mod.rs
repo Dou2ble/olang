@@ -185,3 +185,48 @@ fn pemdas_braces() {
     assert_eq!(eval("{{5-2}+{3*4}}").unwrap(), Value::Int(15));
     assert_eq!(eval("{{2+3}*{4-{1+1}}}").unwrap(), Value::Int(10));
 }
+
+#[test]
+fn equality() {
+    // Test for equality with strings
+    assert_eq!(eval("\"hello\" == \"hello\"").unwrap(), Value::Bool(true));
+    assert_eq!(eval("\"hello\" == \"world\"").unwrap(), Value::Bool(false));
+    assert_eq!(eval("\"hello\" == null").unwrap(), Value::Bool(false));
+    assert_eq!(eval("null == null").unwrap(), Value::Bool(true));
+
+    // Test for inequality with strings
+    assert_eq!(eval("\"hello\" != \"world\"").unwrap(), Value::Bool(true));
+    assert_eq!(eval("\"hello\" != \"hello\"").unwrap(), Value::Bool(false));
+    assert_eq!(eval("\"hello\" != null").unwrap(), Value::Bool(true));
+    assert_eq!(eval("null != null").unwrap(), Value::Bool(false));
+
+    // Test for lists
+    assert_eq!(eval("[1 2 3] == [1 2 3]").unwrap(), Value::Bool(true));
+    assert_eq!(eval("[1 2 3] == [3 2 1]").unwrap(), Value::Bool(false));
+    assert_eq!(eval("[] == []").unwrap(), Value::Bool(true));
+    assert_eq!(eval("null == []").unwrap(), Value::Bool(false));
+
+    // Test for mixed logical expressions with strings, lists, and null
+    assert_eq!(eval("true && (false || true)").unwrap(), Value::Bool(true));
+    assert_eq!(
+        eval("(null == \"hello\") && (null == null)").unwrap(),
+        Value::Bool(false)
+    );
+    assert_eq!(eval("[1 2] != (null == [3 4])").unwrap(), Value::Bool(true));
+
+    // Test for functions
+    assert_eq!(
+        eval("var function = fun(a b c) {4 5 6} function == function").unwrap(),
+        Value::Bool(true)
+    );
+    assert_eq!(
+        eval("fun(a b c) {4 5 6} == fun(d f g) {4 5 6}").unwrap(),
+        Value::Bool(false)
+    );
+    assert_eq!(
+        eval("fun(a b c) {4 5 6} == fun(a b c) {3 2 1}").unwrap(),
+        Value::Bool(false)
+    );
+    assert_eq!(eval("fun(){} == fun(){}").unwrap(), Value::Bool(true));
+    assert_eq!(eval("null == fun(){}").unwrap(), Value::Bool(false));
+}
