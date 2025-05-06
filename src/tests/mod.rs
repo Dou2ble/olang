@@ -1,5 +1,8 @@
 use value::ExceptionKind;
 
+use crate::value::Exception;
+use location::{Location, Region};
+
 use super::*;
 
 #[test]
@@ -22,19 +25,16 @@ fn loops() {
 
 #[test]
 fn throw() {
-    match eval("throw \"Custom error message!\"") {
-        Err(EvalError::UnhandledException(exception)) => match exception.kind {
-            ExceptionKind::Custom(v) => {
-                assert_eq!(v, "Custom error message!".to_string())
+    assert_eq!(
+        eval("throw \"Custom error message!\"").unwrap_err(),
+        EvalError::UnhandledException(Exception {
+            kind: ExceptionKind::Custom("Custom error message!".to_string()),
+            region: Region {
+                start: Location { row: 1, col: 1 },
+                end: Location { row: 1, col: 30 }
             }
-            _ => {
-                panic!("exception is of wrong kind")
-            }
-        },
-        _ => {
-            panic!("throw returned wrong value")
-        }
-    }
+        })
+    );
 }
 
 #[test]
@@ -92,7 +92,7 @@ fn strings_escape_sequences() {
     assert_eq!(
         eval("\"nonexsistant\\e escape sequence\"").unwrap_err(),
         EvalError::Lexer(lexer::LexerError::UnexpectedEscapeSequence {
-            location: location::Location { row: 1, col: 15 },
+            location: Location { row: 1, col: 15 },
             char: 'e'
         })
     );
