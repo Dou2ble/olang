@@ -143,14 +143,14 @@ var grid = if input == "1" {
 }
 
 var gridRows = len(grid)
-var gridCols = len(grid!!0)
+var gridCols = len(grid[0])
 
 var formatGrid = fun() {
     var output = ""
 
     for var row = 0  row < gridRows  row++ {
         for var col = 0  col < gridCols  col++ {
-            if grid!!row!!col {
+            if grid[row col] {
                 output += "██"
             } else {
                 output += "  "
@@ -167,27 +167,26 @@ var formatGrid = fun() {
 var getNeighboursRow = fun(row col countCenter) {
     var result = 0
 
-            printLn("owo")
     if col != 0 {
-        if grid!!row!!col-1 {
+        if grid[row col-1] {
             result++
         }
     } else {
-        if grid!!row!!gridCols-1 {
+        if grid[row gridCols-1] {
             result++
         }
     }
     if countCenter {
-        if grid!!row!!col {
+        if grid[row col] {
             result++
         }
     }
     if col != gridCols-1 {
-        if grid!!row!!col+1 {
+        if grid[row col+1] {
             result++
         }
     } else {
-        if grid!!row!!0 {
+        if grid[row 0] {
             result++
         }
     }
@@ -221,7 +220,7 @@ var generation = fun() {
 
         for var col = 0  col < gridCols  col++ {
             var neighbours = getNeighbours(row col)
-            var living = grid!!row!!col
+            var living = grid[row col]
             var survive = (neighbours == 2 && living) || neighbours == 3
 
             rowList += survive
@@ -236,11 +235,7 @@ var generation = fun() {
 printLn(formatGrid())
 
 loop {
-    printLn("uwu")
     generation()
-    printLn("uwugen")
     printLn(formatGrid())
-    printLn("uwufmt")
     sleep(100)
-    printLn("uwusleep")
 }
