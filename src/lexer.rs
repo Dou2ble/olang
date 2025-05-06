@@ -51,6 +51,7 @@ pub enum TokenValue {
     KeywordContinue,      // continue
     KeywordBreak,         // break
     KeywordThrow,         // throw
+    Period,               // .
     EqualSign,            // =
     CloseParenthesis,     // )
     OpenParenthesis,      // (
@@ -162,6 +163,7 @@ impl Lexer {
                 '}' => Some(TokenValue::CloseBrace),
                 '[' => Some(TokenValue::OpenBracket),
                 ']' => Some(TokenValue::CloseBracket),
+                '.' => Some(TokenValue::Period),
                 '+' => match self.next_or_space() {
                     '+' => {
                         self.advance();

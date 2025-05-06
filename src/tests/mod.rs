@@ -173,6 +173,11 @@ fn assign() {
 }
 
 #[test]
+fn lists() {
+    assert_eq!(eval(include_str!("lists.olang")).unwrap(), Value::Int(136))
+}
+
+#[test]
 fn pemdas_braces() {
     assert_eq!(eval("6/2*{1+2}").unwrap(), Value::Int(9));
     assert_eq!(eval("{3+5}*2").unwrap(), Value::Int(16));

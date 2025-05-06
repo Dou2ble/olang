@@ -83,8 +83,8 @@ pub enum ExpressionValue {
         arguments: Vec<Expression>,
     },
     Index {
-        identifier: String,
-        indexes: Vec<Expression>,
+        left: Box<Expression>,
+        index: Box<Expression>,
     },
     If {
         clauses: Vec<IfClause>,
