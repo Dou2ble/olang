@@ -2,6 +2,7 @@ use crate::{
     ast::*,
     lexer::{Lexer, LexerError, Token, TokenValue, TokenValueDiscriminants},
     location::Region,
+    types::Type,
 };
 use thiserror::Error;
 
@@ -81,6 +82,76 @@ impl Parser {
             found: self.current().clone(),
             while_parsing,
         }
+    }
+
+    fn parse_type(&mut self) -> Result<Type, ParserError> {
+        match self.current_value() {
+            TokenValue::KeywordTypeInt => Ok(Type::Int),
+            TokenValue::KeywordTypeBool => Ok(Type::Bool),
+            TokenValue::KeywordTypeString => Ok(Type::String),
+            TokenValue::KeywordTypeFunction => Ok(Type::Function),
+            _ => Err(ParserError::UnexpectedToken {
+                while_parsing: Some(ExpressionValueDiscriminants::Function), // kind of a lie
+                found: self.current().clone(),
+            }),
+        }
+    }
+
+    fn parse_parameter(&mut self) -> Result<Parameter, ParserError> {
+        let id = match self.current_value() {
+            TokenValue::Identifier(v) => Ok(v.clone()),
+            _ => Err(self.expect_token_err(
+                ExpressionValueDiscriminants::Function, // kind of a lie
+                TokenValueDiscriminants::Identifier,
+            )),
+        }?;
+
+        let _type = self.parse_type()?;
+
+        Ok(Parameter { id, _type })
+    }
+
+    fn parse_function(&mut self) -> Result<ExpressionValue, ParserError> {
+        self.expect_token_discriminant(
+            ExpressionValueDiscriminants::Function,
+            TokenValueDiscriminants::KeywordFun,
+        )?;
+        self.advance();
+
+        self.expect_token_discriminant(
+            ExpressionValueDiscriminants::Function,
+            TokenValueDiscriminants::OpenParenthesis,
+        )?;
+        self.advance();
+
+        let mut parameters = vec![];
+        loop {
+            match self.current_value() {
+                TokenValue::CloseParenthesis => {
+                    self.advance();
+                    break;
+                }
+                TokenValue::Identifier(v) => {
+                    parameters.push(self.parse_parameter()?);
+                }
+                _ => {
+                    return Err(ParserError::UnexpectedToken {
+                        while_parsing: Some(ExpressionValueDiscriminants::Function),
+                        found: self.current().clone(),
+                    })
+                }
+            }
+            self.advance();
+        }
+
+        // parse the return type
+        let return_type = self.parse_type()?;
+
+        Ok(ExpressionValue::Function(DefinedFunction {
+            parameters,
+            return_type,
+            body: self.parse_block()?,
+        }))
     }
 
     fn parse_block(&mut self) -> Result<Block, ParserError> {
@@ -234,45 +305,6 @@ impl Parser {
             identifier,
             arguments,
         })
-    }
-
-    fn parse_function(&mut self) -> Result<ExpressionValue, ParserError> {
-        self.expect_token_discriminant(
-            ExpressionValueDiscriminants::Function,
-            TokenValueDiscriminants::KeywordFun,
-        )?;
-        self.advance();
-
-        self.expect_token_discriminant(
-            ExpressionValueDiscriminants::Function,
-            TokenValueDiscriminants::OpenParenthesis,
-        )?;
-        self.advance();
-
-        let mut parameters = vec![];
-        loop {
-            match self.current_value() {
-                TokenValue::CloseParenthesis => {
-                    self.advance();
-                    break;
-                }
-                TokenValue::Identifier(v) => {
-                    parameters.push(v.clone());
-                }
-                _ => {
-                    return Err(ParserError::UnexpectedToken {
-                        while_parsing: Some(ExpressionValueDiscriminants::Function),
-                        found: self.current().clone(),
-                    })
-                }
-            }
-            self.advance();
-        }
-
-        Ok(ExpressionValue::Function(DefinedFunction {
-            parameters,
-            body: self.parse_block()?,
-        }))
     }
 
     fn parse_if(&mut self) -> Result<ExpressionValue, ParserError> {

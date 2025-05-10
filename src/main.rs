@@ -6,6 +6,8 @@ mod ast;
 mod lexer;
 mod location;
 mod parser;
+mod checker;
+mod types;
 
 /// The easy to use interpreter
 #[derive(StructOpt, Debug)]

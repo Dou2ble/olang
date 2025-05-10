@@ -1,4 +1,4 @@
-use crate::location::Region;
+use crate::{location::Region, types::Type};
 use strum::{Display, EnumDiscriminants};
 
 #[derive(Debug, Clone, PartialEq, Eq)]
@@ -38,9 +38,16 @@ pub enum UpdateOperator {
 pub type Block = Vec<Expression>;
 
 #[derive(Debug, Clone, PartialEq, Eq)]
+pub struct Parameter {
+    pub id: String,
+    pub _type: Type,
+}
+
+#[derive(Debug, Clone, PartialEq, Eq)]
 pub struct DefinedFunction {
-    pub parameters: Vec<String>,
+    pub parameters: Vec<Parameter>,
     pub body: Block,
+    pub return_type: Type,
 }
 
 #[derive(Debug, Clone, PartialEq, Eq)]

@@ -19,6 +19,10 @@ static KEYWORDS: phf::Map<&'static str, TokenValue> = phf_map! {
     "continue" => TokenValue::KeywordContinue,
     "break" => TokenValue::KeywordBreak,
     "throw" => TokenValue::KeywordThrow,
+    "Function" => TokenValue::KeywordTypeFunction,
+    "String" => TokenValue::KeywordTypeString,
+    "Int" => TokenValue::KeywordTypeInt,
+    "Bool" => TokenValue::KeywordTypeBool
 };
 
 static ESCAPE_SEQUENCES: phf::Map<char, char> = phf_map! {
@@ -51,7 +55,12 @@ pub enum TokenValue {
     KeywordContinue,      // continue
     KeywordBreak,         // break
     KeywordThrow,         // throw
+    KeywordTypeFunction,  // Function
+    KeywordTypeString,    // String
+    KeywordTypeInt,       // Int
+    KeywordTypeBool,      // Bool
     Period,               // .
+    QuestionMark,         // ?
     EqualSign,            // =
     CloseParenthesis,     // )
     OpenParenthesis,      // (
@@ -164,6 +173,7 @@ impl Lexer {
                 '[' => Some(TokenValue::OpenBracket),
                 ']' => Some(TokenValue::CloseBracket),
                 '.' => Some(TokenValue::Period),
+                '?' => Some(TokenValue::QuestionMark),
                 '+' => match self.next_or_space() {
                     '+' => {
                         self.advance();
