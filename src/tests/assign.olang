@@ -1,9 +1,0 @@
-var number = 1000000
-
-number += 12984
-number -= 912501
-number *= 128
-number /= 2
-number %= 1000000
-
-number
