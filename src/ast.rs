@@ -73,6 +73,7 @@ pub enum ExpressionValue {
     },
     VariableDeclaration {
         identifier: String,
+        variable_type: Option<Type>,
         expression: Box<Expression>,
     },
     Assign {

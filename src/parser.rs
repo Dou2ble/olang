@@ -93,7 +93,12 @@ impl Parser {
             TokenValue::KeywordTypeString => Ok(Type::String),
             // TokenValue::KeywordTypeFunction => Ok(Type::Function),
             _ => Err(ParserError::UnexpectedToken {
-                while_parsing: Some(ExpressionValueDiscriminants::Function), // kind of a lie
+                // FIXME: parse_type is used by both parse_variable_declaration and parse_function
+                // the error message displayed to the user will be confusing if it is shown during
+                // parsing of a variable declaration here. Using while_parsing: None dose not work
+                // either becuase then it will print that it found it during parsing of an primary
+                // expression
+                while_parsing: Some(ExpressionValueDiscriminants::Function),
                 found: self.current().clone(),
             }),
         }
@@ -269,6 +274,11 @@ impl Parser {
         .clone();
         self.advance();
 
+        let variable_type = match self.current_value() {
+            TokenValue::EqualSign => None,
+            _ => Some(self.parse_type()?),
+        };
+
         self.expect_token_discriminant(
             ExpressionValueDiscriminants::VariableDeclaration,
             TokenValueDiscriminants::EqualSign,
@@ -277,6 +287,7 @@ impl Parser {
 
         Ok(ExpressionValue::VariableDeclaration {
             identifier,
+            variable_type,
             expression: Box::new(self.parse_expression()?),
         })
     }
