@@ -49,6 +49,8 @@ pub enum Error {
     VariableDeclarationInitializedEmptyListMustBeTyped,
     #[error("Variable is initialized with the wrong type")]
     VariableDelcarationMismatchedTypes,
+    #[error("Variable is assigned to another type")]
+    AssignMismatch,
 }
 
 pub struct Checker {
@@ -240,6 +242,31 @@ impl Checker {
             }
         }
 
+        self.scope_declare(identifier.to_string(), value_type)?;
+
+        Ok(Type::Nullable(None))
+    }
+
+    fn check_assign(&mut self, identifier: &str, expression: &Expression) -> Result<Type, Error> {
+        let variable_type = self.scope_get(identifier)?;
+        let value_type = self.check_expression(expression)?;
+
+        match value_type {
+            Type::Nullable(None) => match variable_type {
+                Type::Nullable(_) => {}
+                _ => return Err(Error::AssignMismatch),
+            },
+            Type::List(None) => match variable_type {
+                Type::List(_) => {}
+                _ => return Err(Error::AssignMismatch),
+            },
+            _ => {
+                if variable_type != value_type {
+                    return Err(Error::AssignMismatch);
+                }
+            }
+        }
+
         Ok(Type::Nullable(None))
     }
 
@@ -276,6 +303,11 @@ impl Checker {
                 variable_type,
                 expression,
             } => self.check_variable_declaration(identifier, variable_type, expression),
+            ExpressionValue::Assign {
+                identifier,
+                operator: _,
+                expression,
+            } => self.check_assign(identifier, expression),
             _ => todo!("not implemented"),
         }
     }
