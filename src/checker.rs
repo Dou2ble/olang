@@ -1,5 +1,5 @@
 use crate::{
-    ast::{DefinedFunction, Expression, ExpressionValue, IfClause},
+    ast::{BinaryOperationOperator, DefinedFunction, Expression, ExpressionValue, IfClause},
     lexer::LexerError,
     parser::{Parser, ParserError},
     types::Type,
@@ -53,6 +53,8 @@ pub enum Error {
     AssignMismatch,
     #[error("You can only update integers")]
     UpdateNotInt,
+    #[error("Type mismatch in binary operation")]
+    BinaryExpressionTypeMismatch,
 }
 
 pub struct Checker {
@@ -279,6 +281,91 @@ impl Checker {
         Ok(Type::Nullable(None))
     }
 
+    fn check_binary(
+        &mut self,
+        left: &Expression,
+        operator: &BinaryOperationOperator,
+        right: &Expression,
+    ) -> Result<Type, Error> {
+        todo!("WIP binary expression type checker");
+
+        let types = [self.check_expression(left)?, self.check_expression(right)?];
+
+        match operator {
+            BinaryOperationOperator::Plus
+            | BinaryOperationOperator::Minus
+            | BinaryOperationOperator::Multiply
+            | BinaryOperationOperator::Divide
+            | BinaryOperationOperator::Modulus
+            | BinaryOperationOperator::Exponentiation => {
+                if types.iter().all(|_type| *_type == Type::Int) {
+                    return Err(Error::BinaryExpressionTypeMismatch);
+                } else {
+                    Ok(Type::Int)
+                }
+            }
+            BinaryOperationOperator::IsLessThan
+            | BinaryOperationOperator::IsLessThanOrEqual
+            | BinaryOperationOperator::IsGreaterThan
+            | BinaryOperationOperator::IsGreaterThanOrEqual => {
+                if types[0] != types[1] {
+                    return Err(Error::BinaryExpressionTypeMismatch);
+                } else {
+                    Ok(Type::Bool)
+                }
+            }
+            BinaryOperationOperator::IsEqual | BinaryOperationOperator::IsNotEqual => {
+                if types[0] == types[1] {
+                    Ok(Type::Bool)
+                } else {
+                    // TODO: there is probably a cleaner solution to this
+                    match &types[0] {
+                        Type::List(t) => match t {
+                            None => match types[1] {
+                                Type::List(_) => Ok(Type::Bool),
+                                _ => Err(Error::BinaryExpressionTypeMismatch),
+                            },
+                            Some(v) => match v {
+                                Type::List(u) => {
+                                    if t == u {
+                                        return Ok(Type::Bool);
+                                    } else {
+                                        Err(Error::BinaryExpressionTypeMismatch)
+                                    }
+                                }
+                                _ => Err(Error::BinaryExpressionTypeMismatch),
+                            },
+                        },
+                        Type::Nullable(t) => match t {
+                            None => match types[1] {
+                                Type::Nullable(_) => Ok(Type::Bool),
+                                _ => Err(Error::BinaryExpressionTypeMismatch),
+                            },
+                            Some(v) => match v {
+                                Type::Nullable(u) => {
+                                    if t == u {
+                                        return Ok(Type::Bool);
+                                    } else {
+                                        Err(Error::BinaryExpressionTypeMismatch)
+                                    }
+                                }
+                                _ => Err(Error::BinaryExpressionTypeMismatch),
+                            },
+                        },
+                        _ => Err(Error::BinaryExpressionTypeMismatch),
+                    }
+                }
+            }
+            BinaryOperationOperator::LogicalOr | BinaryOperationOperator::LogicalAnd => {
+                if types.iter().all(|_type| *_type == Type::Bool) {
+                    return Err(Error::BinaryExpressionTypeMismatch);
+                } else {
+                    Ok(Type::Bool)
+                }
+            }
+        }
+    }
+
     fn check_expression(&mut self, expression: &Expression) -> Result<Type, Error> {
         match &expression.value {
             ExpressionValue::Int(_) => Ok(Type::Int),
@@ -321,7 +408,11 @@ impl Checker {
                 identifier,
                 operator: _,
             } => self.check_update(identifier),
-            _ => todo!("not implemented"),
+            ExpressionValue::Binary {
+                left,
+                operator,
+                right,
+            } => self.check_binary(left, operator, right),
         }
     }
 
