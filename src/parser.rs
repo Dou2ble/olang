@@ -85,11 +85,13 @@ impl Parser {
     }
 
     fn parse_type(&mut self) -> Result<Type, ParserError> {
+        // TODO: implement function, nullable and list
+
         match self.current_value() {
             TokenValue::KeywordTypeInt => Ok(Type::Int),
             TokenValue::KeywordTypeBool => Ok(Type::Bool),
             TokenValue::KeywordTypeString => Ok(Type::String),
-            TokenValue::KeywordTypeFunction => Ok(Type::Function),
+            // TokenValue::KeywordTypeFunction => Ok(Type::Function),
             _ => Err(ParserError::UnexpectedToken {
                 while_parsing: Some(ExpressionValueDiscriminants::Function), // kind of a lie
                 found: self.current().clone(),

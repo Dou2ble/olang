@@ -1,9 +1,12 @@
 #[derive(Debug, Clone, PartialEq, Eq)]
 pub enum Type {
-    Function,
+    Function {
+        parameters: Vec<Type>,
+        return_type: Box<Type>,
+    },
     String,
     Int,
     Bool,
-    List(Box<Type>),
-    // Option(Box<Type>),
+    List(Option<Box<Type>>),
+    Nullable(Option<Box<Type>>),
 }
