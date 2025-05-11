@@ -51,6 +51,8 @@ pub enum Error {
     VariableDelcarationMismatchedTypes,
     #[error("Variable is assigned to another type")]
     AssignMismatch,
+    #[error("You can only update integers")]
+    UpdateNotInt,
 }
 
 pub struct Checker {
@@ -270,6 +272,13 @@ impl Checker {
         Ok(Type::Nullable(None))
     }
 
+    fn check_update(&mut self, identifier: &str) -> Result<Type, Error> {
+        if self.scope_get(identifier)? != Type::Int {
+            return Err(Error::UpdateNotInt);
+        }
+        Ok(Type::Nullable(None))
+    }
+
     fn check_expression(&mut self, expression: &Expression) -> Result<Type, Error> {
         match &expression.value {
             ExpressionValue::Int(_) => Ok(Type::Int),
@@ -308,6 +317,10 @@ impl Checker {
                 operator: _,
                 expression,
             } => self.check_assign(identifier, expression),
+            ExpressionValue::Update {
+                identifier,
+                operator: _,
+            } => self.check_update(identifier),
             _ => todo!("not implemented"),
         }
     }
