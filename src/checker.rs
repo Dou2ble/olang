@@ -43,6 +43,12 @@ pub enum Error {
     IndexCannotIndexListWithoutType,
     #[error("Cannot index the variable with this type")]
     IndexCannotIndexWithType,
+    #[error("Variable initialized as null must be typed")]
+    VariableDeclarationInitializedNullMustBeTyped,
+    #[error("Variable initialized as an empty list must be typed")]
+    VariableDeclarationInitializedEmptyListMustBeTyped,
+    #[error("Variable is initialized with the wrong type")]
+    VariableDelcarationMismatchedTypes,
 }
 
 pub struct Checker {
@@ -210,6 +216,33 @@ impl Checker {
         Ok(*_type)
     }
 
+    fn check_variable_declaration(
+        &mut self,
+        identifier: &str,
+        variable_type: &Option<Type>,
+        expression: &Expression,
+    ) -> Result<Type, Error> {
+        let value_type = self.check_expression(expression)?;
+
+        if variable_type == &None {
+            match value_type {
+                Type::Nullable(None) => {
+                    return Err(Error::VariableDeclarationInitializedNullMustBeTyped)
+                }
+                Type::List(None) => {
+                    return Err(Error::VariableDeclarationInitializedEmptyListMustBeTyped)
+                }
+                _ => {}
+            };
+        } else if let Some(variable_type) = variable_type {
+            if *variable_type != value_type {
+                return Err(Error::VariableDelcarationMismatchedTypes);
+            }
+        }
+
+        Ok(Type::Nullable(None))
+    }
+
     fn check_expression(&mut self, expression: &Expression) -> Result<Type, Error> {
         match &expression.value {
             ExpressionValue::Int(_) => Ok(Type::Int),
@@ -238,6 +271,11 @@ impl Checker {
             } => self.check_call(identifier, arguments),
             ExpressionValue::List(list) => self.check_list(list),
             ExpressionValue::Index { left, index } => self.check_index(left, index),
+            ExpressionValue::VariableDeclaration {
+                identifier,
+                variable_type,
+                expression,
+            } => self.check_variable_declaration(identifier, variable_type, expression),
             _ => todo!("not implemented"),
         }
     }
