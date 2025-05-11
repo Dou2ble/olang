@@ -37,6 +37,12 @@ pub enum Error {
     CallWrongArgumentType,
     #[error("Mismatched types inside of a list")]
     ListMistmatchedTypes,
+    #[error("Cannot index into types other than lists")]
+    IndexIntoWrongType,
+    #[error("Cannot index empty list without type")]
+    IndexCannotIndexListWithoutType,
+    #[error("Cannot index the variable with this type")]
+    IndexCannotIndexWithType,
 }
 
 pub struct Checker {
@@ -188,6 +194,22 @@ impl Checker {
         Ok(Type::List(list_type))
     }
 
+    fn check_index(&mut self, left: &Expression, index: &Expression) -> Result<Type, Error> {
+        let _type = match self.check_expression(left)? {
+            Type::List(v) => match v {
+                Some(v) => v,
+                None => return Err(Error::IndexCannotIndexListWithoutType),
+            },
+            _ => return Err(Error::IndexIntoWrongType),
+        };
+
+        if self.check_expression(index)? != Type::Int {
+            return Err(Error::IndexCannotIndexWithType);
+        };
+
+        Ok(*_type)
+    }
+
     fn check_expression(&mut self, expression: &Expression) -> Result<Type, Error> {
         match &expression.value {
             ExpressionValue::Int(_) => Ok(Type::Int),
@@ -215,6 +237,7 @@ impl Checker {
                 arguments,
             } => self.check_call(identifier, arguments),
             ExpressionValue::List(list) => self.check_list(list),
+            ExpressionValue::Index { left, index } => self.check_index(left, index),
             _ => todo!("not implemented"),
         }
     }
