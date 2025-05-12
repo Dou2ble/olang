@@ -177,7 +177,7 @@ impl Checker {
         };
 
         for (argument, parameter) in arguments.iter().zip(parameters.iter()) {
-            if &(self.check_expression(argument))? != parameter {
+            if !&(self.check_expression(argument))?.is_compatible(parameter.clone()) {
                 return Err(Error::CallWrongArgumentType);
             }
         }
