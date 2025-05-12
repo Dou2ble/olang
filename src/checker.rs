@@ -4,7 +4,7 @@ use crate::{
     parser::{Parser, ParserError},
     types::Type,
 };
-use std::{any::Any, collections::HashMap};
+use std::collections::HashMap;
 use thiserror::Error;
 
 #[derive(Error, Debug)]
