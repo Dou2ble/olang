@@ -241,7 +241,7 @@ impl Checker {
                 _ => {}
             };
         } else if let Some(variable_type) = variable_type {
-            if *variable_type != value_type {
+            if !value_type.clone().is_compatible(variable_type.clone()) {
                 return Err(Error::VariableDelcarationMismatchedTypes);
             }
         }
