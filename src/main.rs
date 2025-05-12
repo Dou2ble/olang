@@ -1,12 +1,13 @@
 use anyhow::Result;
-use std::{io::Read, path::PathBuf};
+use checker::Checker;
+use std::{fs::File, io::Read, path::PathBuf};
 use structopt::StructOpt;
 
 mod ast;
+mod checker;
 mod lexer;
 mod location;
 mod parser;
-mod checker;
 mod types;
 
 /// The easy to use interpreter
@@ -25,7 +26,6 @@ struct Options {
     file: Option<PathBuf>,
 }
 
-
 fn main() -> Result<()> {
     run_cli()?;
     Ok(())
@@ -38,13 +38,14 @@ pub fn run_cli() -> Result<()> {
     //     eval(command.as_str())?;
     // };
 
-    // if let Some(path) = options.file {
-    //     let mut file = File::open(path)?;
-    //     let mut content = String::new();
-    //     file.read_to_string(&mut content)?;
+    if let Some(path) = options.file {
+        let mut file = File::open(path)?;
+        let mut content = String::new();
+        file.read_to_string(&mut content)?;
 
-    //     eval(content.as_str())?;
-    // };
+        let mut checker = Checker::new();
+        checker.check(&content)?;
+    };
 
     Ok(())
 }
