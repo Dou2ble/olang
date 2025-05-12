@@ -19,7 +19,7 @@ static KEYWORDS: phf::Map<&'static str, TokenValue> = phf_map! {
     "continue" => TokenValue::KeywordContinue,
     "break" => TokenValue::KeywordBreak,
     "throw" => TokenValue::KeywordThrow,
-    "Function" => TokenValue::KeywordTypeFunction,
+    "Fun" => TokenValue::KeywordTypeFun,
     "String" => TokenValue::KeywordTypeString,
     "Int" => TokenValue::KeywordTypeInt,
     "Bool" => TokenValue::KeywordTypeBool
@@ -55,7 +55,7 @@ pub enum TokenValue {
     KeywordContinue,      // continue
     KeywordBreak,         // break
     KeywordThrow,         // throw
-    KeywordTypeFunction,  // Function
+    KeywordTypeFun,       // Function
     KeywordTypeString,    // String
     KeywordTypeInt,       // Int
     KeywordTypeBool,      // Bool

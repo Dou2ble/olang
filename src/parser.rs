@@ -84,6 +84,39 @@ impl Parser {
         }
     }
 
+    fn parse_function_type(&mut self) -> Result<Type, ParserError> {
+        // FIXME: the same issue as in parse_type
+        self.expect_token_discriminant(
+            ExpressionValueDiscriminants::Function,
+            TokenValueDiscriminants::KeywordTypeFun,
+        )?;
+        self.advance();
+
+        self.expect_token_discriminant(
+            ExpressionValueDiscriminants::Function,
+            TokenValueDiscriminants::OpenBracket,
+        )?;
+        self.advance();
+
+        let mut parameters = vec![];
+        while self.current_value() != &TokenValue::CloseBracket {
+            parameters.push(self.parse_type()?);
+        }
+
+        self.expect_token_discriminant(
+            ExpressionValueDiscriminants::Function,
+            TokenValueDiscriminants::CloseBracket,
+        )?;
+        self.advance();
+
+        let return_type = Box::new(self.parse_type()?);
+
+        Ok(Type::Function {
+            parameters,
+            return_type,
+        })
+    }
+
     fn parse_type(&mut self) -> Result<Type, ParserError> {
         // TODO: implement function, nullable and list
 
@@ -91,7 +124,7 @@ impl Parser {
             TokenValue::KeywordTypeInt => Ok(Type::Int),
             TokenValue::KeywordTypeBool => Ok(Type::Bool),
             TokenValue::KeywordTypeString => Ok(Type::String),
-            // TokenValue::KeywordTypeFunction => Ok(Type::Function),
+            TokenValue::KeywordTypeFun => self.parse_function_type(),
             _ => Err(ParserError::UnexpectedToken {
                 // FIXME: parse_type is used by both parse_variable_declaration and parse_function
                 // the error message displayed to the user will be confusing if it is shown during
