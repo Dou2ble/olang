@@ -255,20 +255,8 @@ impl Checker {
         let variable_type = self.scope_get(identifier)?;
         let value_type = self.check_expression(expression)?;
 
-        match value_type {
-            Type::Nullable(None) => match variable_type {
-                Type::Nullable(_) => {}
-                _ => return Err(Error::AssignMismatch),
-            },
-            Type::List(None) => match variable_type {
-                Type::List(_) => {}
-                _ => return Err(Error::AssignMismatch),
-            },
-            _ => {
-                if variable_type != value_type {
-                    return Err(Error::AssignMismatch);
-                }
-            }
+        if !variable_type.is_compatible(value_type) {
+            return Err(Error::AssignMismatch);
         }
 
         Ok(Type::Nullable(None))
@@ -287,9 +275,8 @@ impl Checker {
         operator: &BinaryOperationOperator,
         right: &Expression,
     ) -> Result<Type, Error> {
-        todo!("WIP binary expression type checker");
-
-        let types = [self.check_expression(left)?, self.check_expression(right)?];
+        let left_type = self.check_expression(left)?;
+        let right_type = self.check_expression(right)?;
 
         match operator {
             BinaryOperationOperator::Plus
@@ -298,7 +285,7 @@ impl Checker {
             | BinaryOperationOperator::Divide
             | BinaryOperationOperator::Modulus
             | BinaryOperationOperator::Exponentiation => {
-                if types.iter().all(|_type| *_type == Type::Int) {
+                if left_type == Type::Int && right_type == Type::Int {
                     return Err(Error::BinaryExpressionTypeMismatch);
                 } else {
                     Ok(Type::Int)
@@ -308,56 +295,21 @@ impl Checker {
             | BinaryOperationOperator::IsLessThanOrEqual
             | BinaryOperationOperator::IsGreaterThan
             | BinaryOperationOperator::IsGreaterThanOrEqual => {
-                if types[0] != types[1] {
-                    return Err(Error::BinaryExpressionTypeMismatch);
-                } else {
+                if left_type == Type::Int && right_type == Type::Int {
                     Ok(Type::Bool)
+                } else {
+                    return Err(Error::BinaryExpressionTypeMismatch);
                 }
             }
             BinaryOperationOperator::IsEqual | BinaryOperationOperator::IsNotEqual => {
-                if types[0] == types[1] {
+                if left_type.is_compatible(right_type) {
                     Ok(Type::Bool)
                 } else {
-                    // TODO: there is probably a cleaner solution to this
-                    match &types[0] {
-                        Type::List(t) => match t {
-                            None => match types[1] {
-                                Type::List(_) => Ok(Type::Bool),
-                                _ => Err(Error::BinaryExpressionTypeMismatch),
-                            },
-                            Some(v) => match v {
-                                Type::List(u) => {
-                                    if t == u {
-                                        return Ok(Type::Bool);
-                                    } else {
-                                        Err(Error::BinaryExpressionTypeMismatch)
-                                    }
-                                }
-                                _ => Err(Error::BinaryExpressionTypeMismatch),
-                            },
-                        },
-                        Type::Nullable(t) => match t {
-                            None => match types[1] {
-                                Type::Nullable(_) => Ok(Type::Bool),
-                                _ => Err(Error::BinaryExpressionTypeMismatch),
-                            },
-                            Some(v) => match v {
-                                Type::Nullable(u) => {
-                                    if t == u {
-                                        return Ok(Type::Bool);
-                                    } else {
-                                        Err(Error::BinaryExpressionTypeMismatch)
-                                    }
-                                }
-                                _ => Err(Error::BinaryExpressionTypeMismatch),
-                            },
-                        },
-                        _ => Err(Error::BinaryExpressionTypeMismatch),
-                    }
+                    Err(Error::BinaryExpressionTypeMismatch)
                 }
             }
             BinaryOperationOperator::LogicalOr | BinaryOperationOperator::LogicalAnd => {
-                if types.iter().all(|_type| *_type == Type::Bool) {
+                if left_type == Type::Int && right_type == Type::Int {
                     return Err(Error::BinaryExpressionTypeMismatch);
                 } else {
                     Ok(Type::Bool)
