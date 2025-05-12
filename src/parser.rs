@@ -137,6 +137,7 @@ impl Parser {
                 });
             }
         };
+        self.advance();
 
         loop {
             match self.current_value() {
