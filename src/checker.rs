@@ -15,8 +15,6 @@ pub enum Error {
     Lexer(#[from] LexerError), // do i really need this error kind?
     #[error("Undeclared identifier: \"{0}\"")]
     UndeclaredIdentifier(String),
-    #[error("Attempted type conversion of variable: \"{0}\"")]
-    Conversion(String),
     #[error("Attempted redefinition of identifier: \"{0}\"")]
     Redifinition(String),
     #[error("Function returns incompatible types")]
