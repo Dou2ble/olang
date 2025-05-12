@@ -120,21 +120,45 @@ impl Parser {
     fn parse_type(&mut self) -> Result<Type, ParserError> {
         // TODO: implement function, nullable and list
 
-        match self.current_value() {
-            TokenValue::KeywordTypeInt => Ok(Type::Int),
-            TokenValue::KeywordTypeBool => Ok(Type::Bool),
-            TokenValue::KeywordTypeString => Ok(Type::String),
-            TokenValue::KeywordTypeFun => self.parse_function_type(),
-            _ => Err(ParserError::UnexpectedToken {
-                // FIXME: parse_type is used by both parse_variable_declaration and parse_function
-                // the error message displayed to the user will be confusing if it is shown during
-                // parsing of a variable declaration here. Using while_parsing: None dose not work
-                // either becuase then it will print that it found it during parsing of an primary
-                // expression
-                while_parsing: Some(ExpressionValueDiscriminants::Function),
-                found: self.current().clone(),
-            }),
+        let mut _type = match self.current_value() {
+            TokenValue::KeywordTypeInt => Type::Int,
+            TokenValue::KeywordTypeBool => Type::Bool,
+            TokenValue::KeywordTypeString => Type::String,
+            TokenValue::KeywordTypeFun => self.parse_function_type()?,
+            _ => {
+                return Err(ParserError::UnexpectedToken {
+                    // FIXME: parse_type is used by both parse_variable_declaration and parse_function
+                    // the error message displayed to the user will be confusing if it is shown during
+                    // parsing of a variable declaration here. Using while_parsing: None dose not work
+                    // either becuase then it will print that it found it during parsing of an primary
+                    // expression
+                    while_parsing: Some(ExpressionValueDiscriminants::Function),
+                    found: self.current().clone(),
+                });
+            }
+        };
+
+        loop {
+            match self.current_value() {
+                TokenValue::OpenBracket => {
+                    self.advance();
+                    self.expect_token_discriminant(
+                        ExpressionValueDiscriminants::Function,
+                        TokenValueDiscriminants::CloseBracket,
+                    )?;
+                    self.advance();
+
+                    _type = Type::List(Some(Box::new(_type)))
+                }
+                TokenValue::QuestionMark => {
+                    self.advance();
+                    _type = Type::Nullable(Some(Box::new(_type)));
+                }
+                _ => break,
+            }
         }
+
+        Ok(_type)
     }
 
     fn parse_parameter(&mut self) -> Result<Parameter, ParserError> {
