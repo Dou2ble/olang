@@ -17,8 +17,6 @@ pub enum Error {
     UndeclaredIdentifier(String),
     #[error("Attempted redefinition of identifier: \"{0}\"")]
     Redifinition(String),
-    #[error("Function returns incompatible types")]
-    FunctionIncompatibleTypes,
     #[error("If test must return a boolean")]
     IfTestNotBool,
     #[error("If expression must have at least one clause")]
